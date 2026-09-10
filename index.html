@@ -11,82 +11,26 @@
 
     <title>ABSS Map</title>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-            font-family: Arial, sans-serif;
-        }
-
-        #game {
-            width: 100%;
-            height: 100%;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        #loading {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            background: #111;
-            color: white;
-            z-index: 1000;
-        }
-
-        #loading h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-
-        #loading p {
-            font-size: 15px;
-            opacity: 0.8;
-        }
-
-        #error {
-            display: none;
-            position: fixed;
-            left: 20px;
-            right: 20px;
-            bottom: 20px;
-            padding: 15px;
-            background: #b00020;
-            color: white;
-            border-radius: 10px;
-            z-index: 2000;
-        }
-    </style>
+    <!-- CSS CONNECT -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+    <!-- GAME -->
+    <div id="game"></div>
+
+    <!-- LOADING -->
     <div id="loading">
         <h1>ABSS Map</h1>
         <p>Loading game...</p>
     </div>
 
-    <div id="game"></div>
-
+    <!-- ERROR -->
     <div id="error"></div>
 
-    <!-- Three.js -->
+
+    <!-- THREE.JS CONNECTION -->
     <script type="importmap">
     {
         "imports": {
@@ -95,184 +39,9 @@
     }
     </script>
 
-    <!-- Main game -->
-    <script type="module">
 
-        import * as THREE from "three";
-
-        const game = document.getElementById("game");
-        const loading = document.getElementById("loading");
-        const errorBox = document.getElementById("error");
-
-        try {
-
-            // =========================
-            // SCENE
-            // =========================
-
-            const scene = new THREE.Scene();
-
-            scene.background = new THREE.Color(0x87ceeb);
-
-            // =========================
-            // CAMERA
-            // =========================
-
-            const camera = new THREE.PerspectiveCamera(
-                60,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                2000
-            );
-
-            camera.position.set(0, 8, 15);
-
-            // =========================
-            // RENDERER
-            // =========================
-
-            const renderer = new THREE.WebGLRenderer({
-                antialias: true
-            });
-
-            renderer.setPixelRatio(
-                Math.min(window.devicePixelRatio, 2)
-            );
-
-            renderer.setSize(
-                window.innerWidth,
-                window.innerHeight
-            );
-
-            renderer.shadowMap.enabled = true;
-
-            game.appendChild(renderer.domElement);
-
-            // =========================
-            // LIGHT
-            // =========================
-
-            const sunlight = new THREE.DirectionalLight(
-                0xffffff,
-                2
-            );
-
-            sunlight.position.set(50, 100, 50);
-            sunlight.castShadow = true;
-
-            scene.add(sunlight);
-
-            const ambientLight = new THREE.AmbientLight(
-                0xffffff,
-                1
-            );
-
-            scene.add(ambientLight);
-
-            // =========================
-            // TEMPORARY GROUND
-            // =========================
-
-            const groundGeometry =
-                new THREE.PlaneGeometry(200, 200);
-
-            const groundMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0x4d8f45
-                });
-
-            const ground =
-                new THREE.Mesh(
-                    groundGeometry,
-                    groundMaterial
-                );
-
-            ground.rotation.x = -Math.PI / 2;
-
-            ground.receiveShadow = true;
-
-            scene.add(ground);
-
-            // =========================
-            // TEMPORARY ABSS BUILDING
-            // =========================
-
-            const buildingGeometry =
-                new THREE.BoxGeometry(25, 12, 18);
-
-            const buildingMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0xb94a3a
-                });
-
-            const building =
-                new THREE.Mesh(
-                    buildingGeometry,
-                    buildingMaterial
-                );
-
-            building.position.set(0, 6, -25);
-
-            building.castShadow = true;
-            building.receiveShadow = true;
-
-            scene.add(building);
-
-            // =========================
-            // GAME LOOP
-            // =========================
-
-            function animate() {
-
-                requestAnimationFrame(animate);
-
-                renderer.render(
-                    scene,
-                    camera
-                );
-            }
-
-            animate();
-
-            // =========================
-            // SCREEN RESIZE
-            // =========================
-
-            window.addEventListener(
-                "resize",
-                () => {
-
-                    camera.aspect =
-                        window.innerWidth /
-                        window.innerHeight;
-
-                    camera.updateProjectionMatrix();
-
-                    renderer.setSize(
-                        window.innerWidth,
-                        window.innerHeight
-                    );
-                }
-            );
-
-            // Loading हटाउने
-            setTimeout(() => {
-                loading.style.display = "none";
-            }, 800);
-
-        } catch (error) {
-
-            console.error(error);
-
-            loading.style.display = "none";
-
-            errorBox.style.display = "block";
-
-            errorBox.textContent =
-                "Game start error: " + error.message;
-        }
-
-    </script>
+    <!-- GAME.JS CONNECT -->
+    <script type="module" src="game.js"></script>
 
 </body>
 </html>
