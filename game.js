@@ -975,24 +975,5 @@ window.addEventListener(
    START
    ========================================= */
 
-const loading =
-  document.getElementById("loading");
-
-setTimeout(
-  () => {
-
-    loading.style.opacity = "0";
-
-    setTimeout(
-      () => {
-        loading.remove();
-      },
-      500
-    );
-
-  },
-  1200
-);
-
 
 update();
