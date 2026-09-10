@@ -1,27 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ABSS Map</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Krishna's ABSS Map</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #111;
+            font-family: Arial, sans-serif;
+        }
+
+        #game {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            color: white;
+            font-size: 22px;
+            z-index: 1000;
+        }
+
+        #error {
+            display: none;
+            position: fixed;
+            inset: 0;
+            padding: 30px;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: #111;
+            color: #ff6b6b;
+            z-index: 2000;
+        }
+    </style>
 </head>
+
 <body>
 
-  <div id="hud">
-    <b>ABSS MAP</b>
-    <span id="place">Main Campus</span>
-  </div>
+    <div id="loading">Loading ABSS Map...</div>
 
-  <div id="look">DRAG TO LOOK</div>
+    <div id="error">
+        <div>
+            <h2>ABSS Map could not start</h2>
+            <p>Please check your internet connection and reload the page.</p>
+        </div>
+    </div>
 
-  <div id="joystick">
-    <div id="stick"></div>
-  </div>
+    <canvas id="game"></canvas>
 
-  <button id="jump">JUMP</button>
-  <button id="run">RUN</button>
+    <!-- Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 
-  <script type="module" src="game.js"></script>
+    <script>
+        "use strict";
+
+        window.addEventListener("load", function () {
+
+            const loading = document.getElementById("loading");
+            const errorBox = document.getElementById("error");
+            const canvas = document.getElementById("game");
+
+            // Check Three.js
+            if (typeof THREE === "undefined") {
+                loading.style.display = "none";
+                errorBox.style.display = "flex";
+                return;
+            }
+
+            // Scene
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+
+            // Camera
+            const camera = new THREE.PerspectiveCamera(
+                70,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+
+            camera.position.set(0, 5, 12);
+
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true
+            });
+
+            renderer.setSize(
+                window.innerWidth,
+                window.innerHeight
+            );
+
+            renderer.setPixelRatio(
+                Math.min(window.devicePixelRatio, 2)
+            );
+
+            // Lights
+            const ambientLight = new THREE.HemisphereLight(
+                0xffffff,
+                0x444444,
+                2
+            );
+
+            scene.add(ambientLight);
+
+            const sun = new THREE.DirectionalLight(
+                0xffffff,
+                2
+            );
+
+            sun.position.set(20, 40, 20);
+            scene.add(sun);
+
+            // Ground
+            const groundGeometry =
+                new THREE.PlaneGeometry(200, 200);
+
+            const groundMaterial =
+                new THREE.MeshStandardMaterial({
+                    color: 0x4d8c3a
+                });
+
+            const ground =
+                new THREE.Mesh(
+                    groundGeometry,
+                    groundMaterial
+                );
+
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            // ABSS Main Building
+            const buildingGeometry =
+                new THREE.BoxGeometry(30, 12, 12);
+
+            const buildingMaterial =
+                new THREE.MeshStandardMaterial({
+                    color: 0xb64b3c
+                });
+
+            const building =
+                new THREE.Mesh(
+                    buildingGeometry,
+                    buildingMaterial
+                );
+
+            building.position.set(0, 6, 0);
+            scene.add(building);
+
+            // White bands
+            for (let y = 3; y <= 9; y += 3) {
+
+                const bandGeometry =
+                    new THREE.BoxGeometry(30.2, 0.25, 12.2);
+
+                const bandMaterial =
+                    new THREE.MeshStandardMaterial({
+                        color: 0xffffff
+                    });
+
+                const band =
+                    new THREE.Mesh(
+                        bandGeometry,
+                        bandMaterial
+                    );
+
+                band.position.set(0, y, 0);
+                scene.add(band);
+            }
+
+            // ABSS sign
+            const signGeometry =
+                new THREE.BoxGeometry(12, 1.5, 0.3);
+
+            const signMaterial =
+                new THREE.MeshStandardMaterial({
+                    color: 0xffffff
+                });
+
+            const sign =
+                new THREE.Mesh(
+                    signGeometry,
+                    signMaterial
+                );
+
+            sign.position.set(0, 9.5, -6.15);
+            scene.add(sign);
+
+            // Player
+            const playerGeometry =
+                new THREE.CapsuleGeometry(
+                    0.5,
+                    1.4,
+                    4,
+                    8
+                );
+
+            const playerMaterial =
+                new THREE.MeshStandardMaterial({
+                    color: 0xeeeeee
+                });
+
+            const player =
+                new THREE.Mesh(
+                    playerGeometry,
+                    playerMaterial
+                );
+
+            player.position.set(0, 1.2, 15);
+            scene.add(player);
+
+            // Camera target
+            const target = new THREE.Vector3();
+
+            function animate() {
+
+                requestAnimationFrame(animate);
+
+                target.set(
+                    player.position.x,
+                    player.position.y + 1,
+                    player.position.z
+                );
+
+                camera.lookAt(target);
+
+                renderer.render(
+                    scene,
+                    camera
+                );
+            }
+
+            // Resize
+            window.addEventListener(
+                "resize",
+                function () {
+
+                    camera.aspect =
+                        window.innerWidth /
+                        window.innerHeight;
+
+                    camera.updateProjectionMatrix();
+
+                    renderer.setSize(
+                        window.innerWidth,
+                        window.innerHeight
+                    );
+                }
+            );
+
+            loading.style.display = "none";
+
+            animate();
+        });
+    </script>
+
 </body>
 </html>
