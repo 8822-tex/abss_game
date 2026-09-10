@@ -687,32 +687,50 @@ function createHostels() {
 /* =========================================================
    MAIN GATE
    ========================================================= */
-
 function createMainGate() {
 
-  const pillarMat =
-    mat(0x8f4a35);
+  /* =========================
+     MAIN GATE MATERIALS
+     ========================= */
+
+  const brickMat =
+    mat(0x8f4030);
+
+  const brickDarkMat =
+    mat(0x673024);
 
   const whiteMat =
-    mat(0xe8e5df);
+    mat(0xf0eee8);
 
-  for (
-    const x of [-12, 12]
-  ) {
+  const gateMat =
+    mat(0x4b3025);
+
+  const metalMat =
+    new THREE.MeshStandardMaterial({
+      color: 0x777777,
+      metalness: 0.7,
+      roughness: 0.35
+    });
+
+  /* =========================
+     LEFT & RIGHT PILLARS
+     ========================= */
+
+  for (const x of [-13, 13]) {
 
     const pillar =
       new THREE.Mesh(
         new THREE.BoxGeometry(
-          3,
-          7,
-          3
+          4,
+          8,
+          4
         ),
-        pillarMat
+        brickMat
       );
 
     pillar.position.set(
       x,
-      3.5,
+      4,
       108
     );
 
@@ -720,43 +738,77 @@ function createMainGate() {
 
     scene.add(pillar);
 
+    /* WHITE CAP */
+
     const cap =
       new THREE.Mesh(
         new THREE.BoxGeometry(
-          3.5,
-          0.5,
-          3.5
+          4.5,
+          0.45,
+          4.5
         ),
         whiteMat
       );
 
     cap.position.set(
       x,
-      7.2,
+      8.2,
       108
     );
 
+    cap.castShadow = true;
+
     scene.add(cap);
+
+    /* DARK BASE */
+
+    const base =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          4.3,
+          0.7,
+          4.3
+        ),
+        brickDarkMat
+      );
+
+    base.position.set(
+      x,
+      0.35,
+      108
+    );
+
+    scene.add(base);
 
   }
 
-  const gate =
+  /* =========================
+     TOP GATE BEAM
+     ========================= */
+
+  const topBeam =
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        20,
-        4,
-        0.3
+        25,
+        1.2,
+        1.3
       ),
-      mat(0x633d2b)
+      brickMat
     );
 
-  gate.position.set(
+  topBeam.position.set(
     0,
-    2,
+    7.3,
     108
   );
 
-  scene.add(gate);
+  topBeam.castShadow = true;
+
+  scene.add(topBeam);
+
+  /* =========================
+     ABSS SIGN
+     ========================= */
 
   const sign =
     createTextBoard(
@@ -764,18 +816,203 @@ function createMainGate() {
     );
 
   sign.scale.set(
-    1.1,
-    1.1,
-    1.1
+    1.35,
+    1.35,
+    1.35
   );
 
   sign.position.set(
     0,
-    6.2,
-    108
+    6.15,
+    107.25
   );
 
   scene.add(sign);
+
+  /* =========================
+     LEFT SLIDING GATE
+     ========================= */
+
+  const leftGate =
+    new THREE.Group();
+
+  const leftPanel =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        11,
+        4.8,
+        0.35
+      ),
+      gateMat
+    );
+
+  leftPanel.position.x =
+    -5.5;
+
+  leftGate.add(leftPanel);
+
+  /* METAL BARS */
+
+  for (
+    let x = -10;
+    x <= -1;
+    x += 1.5
+  ) {
+
+    const bar =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.18,
+          4.8,
+          0.45
+        ),
+        metalMat
+      );
+
+    bar.position.set(
+      x,
+      0,
+      0
+    );
+
+    leftGate.add(bar);
+
+  }
+
+  leftGate.position.set(
+    0,
+    2.4,
+    106.8
+  );
+
+  scene.add(leftGate);
+
+  /* =========================
+     RIGHT SLIDING GATE
+     ========================= */
+
+  const rightGate =
+    new THREE.Group();
+
+  const rightPanel =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        11,
+        4.8,
+        0.35
+      ),
+      gateMat
+    );
+
+  rightPanel.position.x =
+    5.5;
+
+  rightGate.add(rightPanel);
+
+  for (
+    let x = 1;
+    x <= 10;
+    x += 1.5
+  ) {
+
+    const bar =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.18,
+          4.8,
+          0.45
+        ),
+        metalMat
+      );
+
+    bar.position.set(
+      x,
+      0,
+      0
+    );
+
+    rightGate.add(bar);
+
+  }
+
+  rightGate.position.set(
+    0,
+    2.4,
+    106.8
+  );
+
+  scene.add(rightGate);
+
+  /* =========================
+     GATE ROAD
+     ========================= */
+
+  const entrance =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        26,
+        0.08,
+        18
+      ),
+      mat(0x626364)
+    );
+
+  entrance.position.set(
+    0,
+    0.04,
+    118
+  );
+
+  scene.add(entrance);
+
+  /* =========================
+     GATE LIGHTS
+     ========================= */
+
+  for (const x of [-13, 13]) {
+
+    const lamp =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          0.35,
+          10,
+          8
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0xffd66b,
+          emissive: 0xffa000,
+          emissiveIntensity: 1.5
+        })
+      );
+
+    lamp.position.set(
+      x,
+      8.7,
+      108
+    );
+
+    scene.add(lamp);
+
+  }
+
+  /* =========================
+     SMALL GARDEN BESIDE GATE
+     ========================= */
+
+  createBush(-18, 103);
+  createBush(18, 103);
+
+  createTree(
+    -20,
+    104,
+    0.9
+  );
+
+  createTree(
+    20,
+    104,
+    0.9
+  );
 
 }
 
