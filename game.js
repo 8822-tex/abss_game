@@ -1,153 +1,120 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-/* =========================================================
-   ABSS MAP V1
-   Real-project foundation:
-   - Campus terrain
-   - Main ABSS academic blocks
-   - Main entrance
-   - Roads
-   - Gardens
-   - Trees
-   - Sports area
-   - Player
-   - Mobile joystick
-   - Camera
-   ========================================================= */
+/* =========================================
+   ABSS MAP
+   ========================================= */
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x9ec8e5);
+scene.background = new THREE.Color(0x8fc5e8);
+
+
+/* CAMERA */
 
 const camera = new THREE.PerspectiveCamera(
-  65,
+  60,
   window.innerWidth / window.innerHeight,
   0.1,
-  2000
+  1000
 );
 
-camera.position.set(28, 20, 32);
+camera.position.set(18, 12, 22);
+
+
+/* RENDERER */
 
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  powerPreference: "high-performance"
+  antialias: true
 });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
+
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
 
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 document.body.appendChild(renderer.domElement);
 
 
-/* =========================================================
-   LIGHTING
-   ========================================================= */
+/* =========================================
+   LIGHT
+   ========================================= */
 
-const ambientLight = new THREE.HemisphereLight(
-  0xddeeff,
-  0x506040,
-  2.0
+const skyLight = new THREE.HemisphereLight(
+  0xffffff,
+  0x526644,
+  2
 );
 
-scene.add(ambientLight);
+scene.add(skyLight);
+
 
 const sun = new THREE.DirectionalLight(
   0xffffff,
-  3.0
+  3
 );
 
-sun.position.set(80, 120, 60);
+sun.position.set(80, 100, 60);
+
 sun.castShadow = true;
-
-sun.shadow.mapSize.width = 2048;
-sun.shadow.mapSize.height = 2048;
-
-sun.shadow.camera.left = -150;
-sun.shadow.camera.right = 150;
-sun.shadow.camera.top = 150;
-sun.shadow.camera.bottom = -150;
 
 scene.add(sun);
 
 
-/* =========================================================
+/* =========================================
    MATERIALS
-   ========================================================= */
+   ========================================= */
 
-const grassMaterial = new THREE.MeshStandardMaterial({
-  color: 0x4f7f43,
-  roughness: 1
+const grass = new THREE.MeshStandardMaterial({
+  color: 0x4f813f
 });
 
-const roadMaterial = new THREE.MeshStandardMaterial({
-  color: 0x555555,
-  roughness: 0.9
+const road = new THREE.MeshStandardMaterial({
+  color: 0x555555
 });
 
-const buildingWall = new THREE.MeshStandardMaterial({
-  color: 0xc8b39b,
-  roughness: 0.85
+const wall = new THREE.MeshStandardMaterial({
+  color: 0xd1c1ad
 });
 
-const redMaterial = new THREE.MeshStandardMaterial({
-  color: 0x9b3c2f,
-  roughness: 0.8
+const red = new THREE.MeshStandardMaterial({
+  color: 0x963b30
 });
 
-const roofMaterial = new THREE.MeshStandardMaterial({
-  color: 0x6b3028,
-  roughness: 0.85
+const roof = new THREE.MeshStandardMaterial({
+  color: 0x642e27
 });
 
-const glassMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x76a9bd,
+const glass = new THREE.MeshStandardMaterial({
+  color: 0x5fa0b8,
   transparent: true,
-  opacity: 0.45,
-  roughness: 0.15,
-  metalness: 0.1
+  opacity: 0.55
 });
 
-const whiteMaterial = new THREE.MeshStandardMaterial({
-  color: 0xe7e3da,
-  roughness: 0.8
+const white = new THREE.MeshStandardMaterial({
+  color: 0xe9e5dd
 });
 
-const treeMaterial = new THREE.MeshStandardMaterial({
-  color: 0x285b2b,
-  roughness: 1
+const treeGreen = new THREE.MeshStandardMaterial({
+  color: 0x28632e
 });
 
-const trunkMaterial = new THREE.MeshStandardMaterial({
-  color: 0x68452d,
-  roughness: 1
+const trunk = new THREE.MeshStandardMaterial({
+  color: 0x65442c
 });
 
 
-/* =========================================================
-   CAMPUS GROUND
-   ========================================================= */
+/* =========================================
+   HELPER
+   ========================================= */
 
-const campus = new THREE.Mesh(
-  new THREE.BoxGeometry(230, 2, 170),
-  grassMaterial
-);
-
-campus.position.y = -1;
-
-campus.receiveShadow = true;
-
-scene.add(campus);
-
-
-/* =========================================================
-   HELPER FUNCTIONS
-   ========================================================= */
-
-function createBox(
+function box(
   width,
   height,
   depth,
@@ -156,530 +123,458 @@ function createBox(
   y,
   z
 ) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
+  const object = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      width,
+      height,
+      depth
+    ),
     material
   );
 
-  mesh.position.set(x, y, z);
+  object.position.set(x, y, z);
 
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
+  object.castShadow = true;
+  object.receiveShadow = true;
 
-  scene.add(mesh);
+  scene.add(object);
 
-  return mesh;
+  return object;
 }
 
 
-function createRoad(width, depth, x, z) {
+/* =========================================
+   CAMPUS GROUND
+   ========================================= */
 
-  return createBox(
-    width,
-    0.15,
-    depth,
-    roadMaterial,
-    x,
-    0.08,
-    z
-  );
-}
-
-
-/* =========================================================
-   INTERNAL CAMPUS ROADS
-   ========================================================= */
-
-createRoad(220, 10, 0, 58);
-createRoad(220, 10, 0, -58);
-
-createRoad(10, 125, -70, 0);
-createRoad(10, 125, 70, 0);
-
-createRoad(120, 8, 0, 0);
+box(
+  220,
+  2,
+  170,
+  grass,
+  0,
+  -1,
+  0
+);
 
 
-/* =========================================================
-   MAIN ABSS ACADEMIC BUILDING
-   THREE BLOCK CONCEPT
-   ========================================================= */
+/* =========================================
+   CAMPUS ROADS
+   ========================================= */
 
-function createAcademicBlock(
-  name,
+box(
+  210,
+  0.15,
+  10,
+  road,
+  0,
+  0.05,
+  55
+);
+
+box(
+  210,
+  0.15,
+  10,
+  road,
+  0,
+  0.05,
+  -55
+);
+
+box(
+  10,
+  0.15,
+  110,
+  road,
+  -75,
+  0.05,
+  0
+);
+
+box(
+  10,
+  0.15,
+  110,
+  road,
+  75,
+  0.05,
+  0
+);
+
+box(
+  120,
+  0.15,
+  8,
+  road,
+  0,
+  0.06,
+  5
+);
+
+
+/* =========================================
+   ACADEMIC BLOCK
+   ========================================= */
+
+function createBlock(
   x,
   z,
   width,
-  depth,
-  height
+  depth
 ) {
 
-  const group = new THREE.Group();
+  const height = 20;
 
-  const main = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    buildingWall
+  /* Main building */
+
+  box(
+    width,
+    height,
+    depth,
+    wall,
+    x,
+    height / 2,
+    z
   );
 
-  main.position.y = height / 2;
 
-  main.castShadow = true;
-  main.receiveShadow = true;
+  /* Red front */
 
-  group.add(main);
-
-
-  /* Red front section */
-
-  const front = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height * 0.72, 1.2),
-    redMaterial
+  box(
+    width,
+    14,
+    1,
+    red,
+    x,
+    7,
+    z + depth / 2 + 0.55
   );
-
-  front.position.set(
-    0,
-    height * 0.38,
-    depth / 2 + 0.65
-  );
-
-  front.castShadow = true;
-
-  group.add(front);
 
 
   /* Roof */
 
-  const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      width + 1.5,
-      1,
-      depth + 1.5
-    ),
-    roofMaterial
+  box(
+    width + 2,
+    1,
+    depth + 2,
+    roof,
+    x,
+    height + 0.5,
+    z
   );
-
-  roof.position.y = height + 0.5;
-
-  roof.castShadow = true;
-
-  group.add(roof);
 
 
   /* Windows */
 
-  const windowRows = 4;
-  const windowsPerRow = Math.max(3, Math.floor(width / 5));
+  const rows = 4;
+  const columns = Math.max(
+    3,
+    Math.floor(width / 5)
+  );
 
-  for (let row = 0; row < windowRows; row++) {
+  for (let r = 0; r < rows; r++) {
 
-    for (let col = 0; col < windowsPerRow; col++) {
+    for (let c = 0; c < columns; c++) {
 
-      const windowMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(2.3, 2.1, 0.12),
-        glassMaterial
+      const gap =
+        width / (columns + 1);
+
+      box(
+        2.2,
+        2.1,
+        0.15,
+        glass,
+        x - width / 2 +
+          gap * (c + 1),
+        3 + r * 4,
+        z + depth / 2 + 1.1
       );
-
-      const spacing =
-        width / (windowsPerRow + 1);
-
-      windowMesh.position.set(
-        -width / 2 + spacing * (col + 1),
-        3 + row * 4,
-        depth / 2 + 1.3
-      );
-
-      group.add(windowMesh);
     }
   }
-
-
-  group.position.set(x, 0, z);
-
-  scene.add(group);
-
-  return group;
 }
 
 
-/*
-   ABSS official site identifies the three academic blocks
-   as Mahatma Gandhi, Madan Mohan Malviya and Vishvesaraya.
-*/
+/* Three ABSS academic blocks */
 
-const gandhiBlock = createAcademicBlock(
-  "Mahatma Gandhi Block",
-  -38,
-  -12,
-  42,
-  24,
-  20
+createBlock(
+  -42,
+  -18,
+  38,
+  24
 );
 
-const malviyaBlock = createAcademicBlock(
-  "Madan Mohan Malviya Block",
-  8,
-  -12,
-  42,
-  24,
-  20
+createBlock(
+  0,
+  -18,
+  38,
+  24
 );
 
-const vishvesarayaBlock = createAcademicBlock(
-  "Vishvesaraya Block",
-  54,
-  -12,
+createBlock(
   42,
-  24,
-  20
+  -18,
+  38,
+  24
 );
 
 
-/* =========================================================
-   MAIN ENTRANCE / PORTICO
-   ========================================================= */
+/* =========================================
+   MAIN ENTRANCE
+   ========================================= */
 
-const entranceBase = createBox(
-  24,
+box(
+  25,
   0.6,
   12,
-  whiteMaterial,
-  8,
+  white,
+  0,
   0.3,
+  2
+);
+
+
+/* Entrance roof */
+
+box(
+  27,
+  1,
+  11,
+  red,
+  0,
+  10,
   4
 );
 
-const entranceRoof = createBox(
-  25,
-  1,
-  10,
-  redMaterial,
-  8,
-  10,
-  5
-);
 
-for (let i = -1; i <= 1; i++) {
+/* Entrance pillars */
 
-  createBox(
+for (const x of [-11, 0, 11]) {
+
+  box(
     1.2,
     10,
     1.2,
-    whiteMaterial,
-    8 + i * 10,
+    white,
+    x,
     5,
-    9
+    8
   );
 }
 
 
-/* Glass entrance */
+/* Glass main entrance */
 
-createBox(
-  15,
+box(
+  18,
   7,
-  0.35,
-  glassMaterial,
-  8,
+  0.3,
+  glass,
+  0,
   3.5,
-  9.7
+  8.7
 );
 
 
-/* =========================================================
+/* =========================================
    GARDENS
-   ========================================================= */
+   ========================================= */
 
-function createGarden(
-  width,
-  depth,
-  x,
-  z
-) {
+box(
+  45,
+  0.2,
+  32,
+  grass,
+  -85,
+  0.1,
+  5
+);
 
-  const garden = createBox(
-    width,
-    0.25,
-    depth,
-    grassMaterial,
-    x,
-    0.15,
-    z
-  );
-
-  return garden;
-}
-
-createGarden(42, 35, -80, 0);
-createGarden(35, 30, 80, 10);
-createGarden(55, 30, 0, 38);
+box(
+  40,
+  0.2,
+  32,
+  grass,
+  85,
+  0.1,
+  5
+);
 
 
-/* =========================================================
-   TREE
-   ========================================================= */
+/* =========================================
+   TREES
+   ========================================= */
 
-function createTree(x, z, scale = 1) {
+function createTree(x, z, size) {
 
-  const group = new THREE.Group();
+  const tree = new THREE.Group();
 
-  const trunk = new THREE.Mesh(
+  const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(
-      0.5 * scale,
-      0.75 * scale,
-      4 * scale,
+      0.5 * size,
+      0.7 * size,
+      4 * size,
       8
     ),
-    trunkMaterial
+    trunk
   );
 
-  trunk.position.y = 2 * scale;
+  stem.position.y = 2 * size;
 
-  trunk.castShadow = true;
+  stem.castShadow = true;
 
-  group.add(trunk);
+  tree.add(stem);
 
 
   const leaves = new THREE.Mesh(
     new THREE.SphereGeometry(
-      3.2 * scale,
+      3 * size,
       12,
       10
     ),
-    treeMaterial
+    treeGreen
   );
 
-  leaves.position.y = 6 * scale;
+  leaves.position.y = 6 * size;
 
   leaves.castShadow = true;
 
-  group.add(leaves);
+  tree.add(leaves);
 
 
-  group.position.set(x, 0, z);
+  tree.position.set(
+    x,
+    0,
+    z
+  );
 
-  scene.add(group);
+  scene.add(tree);
 }
 
 
-/* Campus greenery */
-
-const treePositions = [
-  [-95, -45],
-  [-85, -25],
-  [-92, 20],
-  [-82, 45],
-  [-65, 45],
-  [-45, 48],
-  [-20, 48],
-  [10, 48],
-  [35, 48],
-  [65, 45],
-  [85, 35],
-  [95, 10],
-  [90, -25],
-  [78, -45],
-  [-75, 5],
-  [-60, 20]
+const trees = [
+  [-100, -35],
+  [-92, -15],
+  [-98, 15],
+  [-88, 35],
+  [-70, 40],
+  [-52, 43],
+  [-25, 43],
+  [25, 43],
+  [52, 43],
+  [70, 40],
+  [90, 35],
+  [98, 10],
+  [95, -20],
+  [82, -38],
+  [-75, 5]
 ];
 
-treePositions.forEach((p, i) => {
-  createTree(
-    p[0],
-    p[1],
-    0.8 + (i % 3) * 0.15
-  );
-});
+trees.forEach(
+  (position, index) => {
+
+    createTree(
+      position[0],
+      position[1],
+      0.8 + (index % 3) * 0.15
+    );
+
+  }
+);
 
 
-/* =========================================================
+/* =========================================
    SPORTS AREA
-   ========================================================= */
+   ========================================= */
 
-const sportsBase = createBox(
+box(
   42,
   0.2,
   30,
-  roadMaterial,
-  -70,
+  road,
+  -78,
   0.15,
-  30
+  38
 );
 
-const courtLineMaterial =
-  new THREE.MeshBasicMaterial({
-    color: 0xffffff
-  });
 
-function createCourtLine(
-  width,
-  depth,
-  x,
-  z
-) {
-
-  const line = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      width,
-      0.05,
-      depth
-    ),
-    courtLineMaterial
-  );
-
-  line.position.set(x, 0.3, z);
-
-  scene.add(line);
-}
-
-createCourtLine(38, 0.25, -70, 15);
-createCourtLine(38, 0.25, -70, 45);
-
-createCourtLine(0.25, 28, -89, 30);
-createCourtLine(0.25, 28, -51, 30);
-
-
-/* =========================================================
-   SIMPLE PLAYER
-   ========================================================= */
+/* =========================================
+   PLAYER
+   ========================================= */
 
 const player = new THREE.Group();
 
-const body = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.7, 1.5, 6, 12),
+
+/* Body */
+
+const playerBody = new THREE.Mesh(
+  new THREE.CapsuleGeometry(
+    0.65,
+    1.5,
+    6,
+    12
+  ),
   new THREE.MeshStandardMaterial({
     color: 0xffffff
   })
 );
 
-body.position.y = 1.5;
-body.castShadow = true;
+playerBody.position.y = 1.5;
 
-player.add(body);
+playerBody.castShadow = true;
+
+player.add(playerBody);
 
 
-const head = new THREE.Mesh(
-  new THREE.SphereGeometry(0.55, 16, 12),
+/* Head */
+
+const playerHead = new THREE.Mesh(
+  new THREE.SphereGeometry(
+    0.55,
+    16,
+    12
+  ),
   new THREE.MeshStandardMaterial({
     color: 0xc88d6b
   })
 );
 
-head.position.y = 3.1;
-head.castShadow = true;
+playerHead.position.y = 3.05;
 
-player.add(head);
+playerHead.castShadow = true;
 
+player.add(playerHead);
+
+
+/* Player spawn */
 
 player.position.set(
-  8,
   0,
-  25
+  0,
+  28
 );
 
 scene.add(player);
 
 
-/* =========================================================
-   CAMERA
-   ========================================================= */
-
-const cameraTarget = new THREE.Vector3();
-
-const controls = new OrbitControls(
-  camera,
-  renderer.domElement
-);
-
-controls.enableDamping = true;
-controls.enablePan = false;
-
-controls.minDistance = 5;
-controls.maxDistance = 60;
-
-controls.maxPolarAngle = Math.PI * 0.48;
-
-controls.target.copy(player.position);
-
-
-/* =========================================================
-   MOVEMENT
-   ========================================================= */
-
-const movement = {
-  x: 0,
-  y: 0
-};
-
-let running = false;
-let velocityY = 0;
-
-const WALK_SPEED = 0.09;
-const RUN_SPEED = 0.17;
-const GRAVITY = -0.012;
-
-let grounded = true;
-
-
-/* =========================================================
-   KEYBOARD
-   ========================================================= */
-
-const keys = {};
-
-window.addEventListener(
-  "keydown",
-  (event) => {
-    keys[event.key.toLowerCase()] = true;
-
-    if (event.key === " ") {
-      jump();
-    }
-
-    if (event.key.toLowerCase() === "shift") {
-      running = true;
-    }
-  }
-);
-
-window.addEventListener(
-  "keyup",
-  (event) => {
-    keys[event.key.toLowerCase()] = false;
-
-    if (event.key.toLowerCase() === "shift") {
-      running = false;
-    }
-  }
-);
-
-
-/* =========================================================
-   JUMP
-   ========================================================= */
-
-function jump() {
-
-  if (!grounded) return;
-
-  velocityY = 0.22;
-  grounded = false;
-}
-
-
-/* =========================================================
+/* =========================================
    MOBILE JOYSTICK
-   ========================================================= */
+   ========================================= */
 
 const joystick =
   document.getElementById("joystick");
 
-const knob =
-  document.getElementById("joystickKnob");
+const stick =
+  document.getElementById("stick");
 
-let joystickActive = false;
+let joystickX = 0;
+let joystickY = 0;
+let active = false;
 
-const joystickRadius = 45;
+const maxDistance = 42;
 
-function updateJoystick(clientX, clientY) {
+
+function moveStick(x, y) {
 
   const rect =
     joystick.getBoundingClientRect();
@@ -690,155 +585,270 @@ function updateJoystick(clientX, clientY) {
   const centerY =
     rect.top + rect.height / 2;
 
-  let dx = clientX - centerX;
-  let dy = clientY - centerY;
+  let dx = x - centerX;
+  let dy = y - centerY;
 
   const distance =
-    Math.sqrt(dx * dx + dy * dy);
+    Math.sqrt(
+      dx * dx +
+      dy * dy
+    );
 
-  if (distance > joystickRadius) {
+  if (distance > maxDistance) {
 
     dx =
-      (dx / distance) *
-      joystickRadius;
+      dx / distance *
+      maxDistance;
 
     dy =
-      (dy / distance) *
-      joystickRadius;
+      dy / distance *
+      maxDistance;
   }
 
-  knob.style.transform =
-    `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  stick.style.transform =
+    `translate(
+      calc(-50% + ${dx}px),
+      calc(-50% + ${dy}px)
+    )`;
 
-  movement.x = dx / joystickRadius;
-  movement.y = dy / joystickRadius;
+  joystickX =
+    dx / maxDistance;
+
+  joystickY =
+    dy / maxDistance;
 }
 
-function resetJoystick() {
 
-  joystickActive = false;
+function resetStick() {
 
-  movement.x = 0;
-  movement.y = 0;
+  active = false;
 
-  knob.style.transform =
+  joystickX = 0;
+  joystickY = 0;
+
+  stick.style.transform =
     "translate(-50%, -50%)";
 }
 
 
 joystick.addEventListener(
   "pointerdown",
-  (event) => {
+  event => {
 
-    joystickActive = true;
+    active = true;
 
     joystick.setPointerCapture(
       event.pointerId
     );
 
-    updateJoystick(
+    moveStick(
       event.clientX,
       event.clientY
     );
   }
 );
+
 
 joystick.addEventListener(
   "pointermove",
-  (event) => {
+  event => {
 
-    if (!joystickActive) return;
+    if (!active) return;
 
-    updateJoystick(
+    moveStick(
       event.clientX,
       event.clientY
     );
   }
 );
 
+
 joystick.addEventListener(
   "pointerup",
-  resetJoystick
+  resetStick
 );
 
 joystick.addEventListener(
   "pointercancel",
-  resetJoystick
+  resetStick
 );
 
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
+/* =========================================
+   RUN
+   ========================================= */
+
+let running = false;
+
+const runButton =
+  document.getElementById("run");
+
+runButton.addEventListener(
+  "pointerdown",
+  () => {
+    running = true;
+  }
+);
+
+runButton.addEventListener(
+  "pointerup",
+  () => {
+    running = false;
+  }
+);
+
+runButton.addEventListener(
+  "pointercancel",
+  () => {
+    running = false;
+  }
+);
+
+
+/* =========================================
+   JUMP
+   ========================================= */
+
+let verticalVelocity = 0;
+let onGround = true;
+
+function jump() {
+
+  if (!onGround) return;
+
+  verticalVelocity = 0.22;
+
+  onGround = false;
+}
+
 
 document
-  .getElementById("jumpButton")
+  .getElementById("jump")
   .addEventListener(
     "pointerdown",
     jump
   );
 
-document
-  .getElementById("runButton")
-  .addEventListener(
-    "pointerdown",
-    () => {
+
+/* =========================================
+   KEYBOARD
+   ========================================= */
+
+const keys = {};
+
+window.addEventListener(
+  "keydown",
+  event => {
+
+    keys[
+      event.key.toLowerCase()
+    ] = true;
+
+    if (event.key === " ") {
+      jump();
+    }
+
+    if (
+      event.key.toLowerCase() ===
+      "shift"
+    ) {
       running = true;
     }
-  );
+  }
+);
 
-document
-  .getElementById("runButton")
-  .addEventListener(
-    "pointerup",
-    () => {
+
+window.addEventListener(
+  "keyup",
+  event => {
+
+    keys[
+      event.key.toLowerCase()
+    ] = false;
+
+    if (
+      event.key.toLowerCase() ===
+      "shift"
+    ) {
       running = false;
     }
-  );
+  }
+);
 
 
-/* =========================================================
-   GAME LOOP
-   ========================================================= */
+/* =========================================
+   GAME UPDATE
+   ========================================= */
 
-const clock = new THREE.Clock();
+const clock =
+  new THREE.Clock();
 
-function updatePlayer(delta) {
+function update() {
 
-  let x = movement.x;
-  let z = movement.y;
+  const delta =
+    Math.min(
+      clock.getDelta(),
+      0.05
+    );
+
+
+  let x = joystickX;
+  let z = joystickY;
+
 
   /* Keyboard */
 
-  if (keys["w"] || keys["arrowup"]) {
+  if (
+    keys["w"] ||
+    keys["arrowup"]
+  ) {
     z = -1;
   }
 
-  if (keys["s"] || keys["arrowdown"]) {
+  if (
+    keys["s"] ||
+    keys["arrowdown"]
+  ) {
     z = 1;
   }
 
-  if (keys["a"] || keys["arrowleft"]) {
+  if (
+    keys["a"] ||
+    keys["arrowleft"]
+  ) {
     x = -1;
   }
 
-  if (keys["d"] || keys["arrowright"]) {
+  if (
+    keys["d"] ||
+    keys["arrowright"]
+  ) {
     x = 1;
   }
 
 
-  const length =
-    Math.sqrt(x * x + z * z);
+  /* Movement */
 
-  if (length > 0) {
+  if (
+    Math.abs(x) > 0.01 ||
+    Math.abs(z) > 0.01
+  ) {
+
+    const length =
+      Math.sqrt(
+        x * x +
+        z * z
+      );
 
     x /= length;
     z /= length;
 
+
     const speed =
       running
-        ? RUN_SPEED
-        : WALK_SPEED;
+        ? 0.17
+        : 0.09;
+
 
     player.position.x +=
       x * speed * delta * 60;
@@ -847,33 +857,31 @@ function updatePlayer(delta) {
       z * speed * delta * 60;
 
 
-    /*
-      Character faces movement direction.
-    */
-
-    const angle =
+    player.rotation.y =
       Math.atan2(x, z);
-
-    player.rotation.y = angle;
   }
 
 
   /* Gravity */
 
-  velocityY +=
-    GRAVITY * delta * 60;
+  verticalVelocity -=
+    0.012 * delta * 60;
 
   player.position.y +=
-    velocityY * delta * 60;
+    verticalVelocity *
+    delta *
+    60;
 
 
-  if (player.position.y <= 0) {
+  if (
+    player.position.y <= 0
+  ) {
 
     player.position.y = 0;
 
-    velocityY = 0;
+    verticalVelocity = 0;
 
-    grounded = true;
+    onGround = true;
   }
 
 
@@ -882,38 +890,68 @@ function updatePlayer(delta) {
   player.position.x =
     THREE.MathUtils.clamp(
       player.position.x,
-      -108,
-      108
+      -105,
+      105
     );
 
   player.position.z =
     THREE.MathUtils.clamp(
       player.position.z,
-      -78,
-      78
+      -75,
+      75
     );
 
 
-  /* Camera follows */
+  /* Camera follow */
 
-  cameraTarget.lerp(
-    new THREE.Vector3(
-      player.position.x,
-      player.position.y + 1.5,
-      player.position.z
-    ),
-    0.12
+  const targetX =
+    player.position.x;
+
+  const targetY =
+    player.position.y + 2;
+
+  const targetZ =
+    player.position.z;
+
+
+  camera.position.x +=
+    (
+      targetX + 15 -
+      camera.position.x
+    ) * 0.08;
+
+  camera.position.y +=
+    (
+      targetY + 9 -
+      camera.position.y
+    ) * 0.08;
+
+  camera.position.z +=
+    (
+      targetZ + 18 -
+      camera.position.z
+    ) * 0.08;
+
+
+  camera.lookAt(
+    targetX,
+    targetY,
+    targetZ
   );
 
-  controls.target.copy(
-    cameraTarget
+
+  renderer.render(
+    scene,
+    camera
   );
+
+  requestAnimationFrame(update);
 }
 
 
-/* =========================================================
+/* =========================================
    RESIZE
-   ========================================================= */
+   ========================================= */
 
 window.addEventListener(
   "resize",
@@ -933,68 +971,28 @@ window.addEventListener(
 );
 
 
-/* =========================================================
-   LOADING
-   ========================================================= */
-
-let progress = 0;
-
-const progressElement =
-  document.getElementById(
-    "loadingProgress"
-  );
+/* =========================================
+   START
+   ========================================= */
 
 const loading =
   document.getElementById("loading");
 
-const loadingTimer =
-  setInterval(() => {
+setTimeout(
+  () => {
 
-    progress += 10;
+    loading.style.opacity = "0";
 
-    progressElement.style.width =
-      Math.min(progress, 100) + "%";
-
-    if (progress >= 100) {
-
-      clearInterval(loadingTimer);
-
-      setTimeout(() => {
-
-        loading.style.opacity = "0";
-
-        setTimeout(() => {
-          loading.remove();
-        }, 600);
-
-      }, 300);
-    }
-
-  }, 80);
-
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
-function animate() {
-
-  requestAnimationFrame(animate);
-
-  const delta =
-    Math.min(
-      clock.getDelta(),
-      0.05
+    setTimeout(
+      () => {
+        loading.remove();
+      },
+      500
     );
 
-  updatePlayer(delta);
+  },
+  1200
+);
 
-  controls.update();
 
-  renderer.render(
-    scene,
-    camera
-  );
-}
-
-animate();
+update();
