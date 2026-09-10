@@ -1,49 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  />
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <title>ABSS Map</title>
 
-  <link rel="stylesheet" href="./style.css" />
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
 
   <div id="loading">
     <div class="loading-title">ABSS MAP</div>
-    <div class="loading-subtitle">ABSS Institute of Technology • Meerut</div>
-    <div class="loading-bar">
-      <div id="loadingProgress"></div>
-    </div>
+    <div class="loading-text">Loading ABSS Institute of Technology...</div>
   </div>
 
   <div id="hud">
-    <div class="map-title">ABSS MAP</div>
-    <div class="location">ABSS Institute of Technology</div>
+    <div class="title">ABSS MAP</div>
+    <div class="subtitle">ABSS Institute of Technology • Meerut</div>
   </div>
 
-  <div id="controls">
-    <div id="joystick">
-      <div id="joystickKnob"></div>
-    </div>
-
-    <button id="jumpButton">JUMP</button>
-    <button id="runButton">RUN</button>
+  <div id="joystick">
+    <div id="stick"></div>
   </div>
+
+  <button id="jump">JUMP</button>
+  <button id="run">RUN</button>
 
   <script type="module" src="./game.js"></script>
 
