@@ -1,8 +1,7 @@
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 html,
@@ -10,9 +9,9 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #101010;
-  font-family: Arial, sans-serif;
+  background: #000;
   touch-action: none;
+  font-family: Arial, sans-serif;
 }
 
 canvas {
@@ -25,41 +24,27 @@ canvas {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: #101010;
+  background: #111;
   color: white;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.6s ease;
+
+  transition: opacity 0.5s ease;
 }
 
 .loading-title {
   font-size: 34px;
-  font-weight: 800;
+  font-weight: bold;
   letter-spacing: 4px;
 }
 
-.loading-subtitle {
-  margin-top: 10px;
+.loading-text {
+  margin-top: 12px;
   font-size: 13px;
   opacity: 0.75;
-}
-
-.loading-bar {
-  width: 220px;
-  height: 5px;
-  margin-top: 25px;
-  background: #333;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-#loadingProgress {
-  width: 0%;
-  height: 100%;
-  background: #ffffff;
-  transition: width 0.3s;
 }
 
 #hud {
@@ -67,32 +52,27 @@ canvas {
   top: 18px;
   left: 18px;
   z-index: 10;
+
   color: white;
   pointer-events: none;
-  text-shadow: 0 2px 5px #000;
+
+  text-shadow: 0 2px 5px black;
 }
 
-.map-title {
-  font-size: 21px;
-  font-weight: 800;
+.title {
+  font-size: 22px;
+  font-weight: bold;
   letter-spacing: 2px;
 }
 
-.location {
-  margin-top: 4px;
+.subtitle {
+  margin-top: 5px;
   font-size: 11px;
   opacity: 0.85;
 }
 
-#controls {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-}
-
 #joystick {
-  position: absolute;
+  position: fixed;
   left: 25px;
   bottom: 28px;
 
@@ -100,13 +80,14 @@ canvas {
   height: 125px;
 
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.25);
 
-  pointer-events: auto;
+  z-index: 20;
+  touch-action: none;
 }
 
-#joystickKnob {
+#stick {
   position: absolute;
 
   width: 52px;
@@ -118,38 +99,38 @@ canvas {
   transform: translate(-50%, -50%);
 
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255,255,255,0.8);
 }
 
-#jumpButton,
-#runButton {
-  position: absolute;
-  pointer-events: auto;
-
-  border: none;
-  border-radius: 50%;
-
-  color: white;
-  font-weight: bold;
-
-  background: rgba(0, 0, 0, 0.45);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+button {
+  position: fixed;
+  z-index: 20;
 
   width: 65px;
   height: 65px;
+
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+
+  background: rgba(0,0,0,0.5);
+  color: white;
+
+  font-size: 11px;
+  font-weight: bold;
+
+  touch-action: none;
 }
 
-#jumpButton {
-  right: 30px;
+#jump {
+  right: 28px;
   bottom: 105px;
 }
 
-#runButton {
+#run {
   right: 105px;
-  bottom: 35px;
+  bottom: 32px;
   width: 58px;
   height: 58px;
-  font-size: 10px;
 }
 
 button:active {
