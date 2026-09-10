@@ -5,277 +5,605 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <title>Krishna's ABSS Map</title>
+    <meta name="theme-color" content="#111111">
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <title>ABSS Map | Krishna's ABSS Game</title>
 
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #111;
-            font-family: Arial, sans-serif;
-        }
-
-        #game {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        #loading {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #111;
-            color: white;
-            font-size: 22px;
-            z-index: 1000;
-        }
-
-        #error {
-            display: none;
-            position: fixed;
-            inset: 0;
-            padding: 30px;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background: #111;
-            color: #ff6b6b;
-            z-index: 2000;
-        }
-    </style>
+    <!-- CSS will be connected here -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div id="loading">Loading ABSS Map...</div>
+    <!-- =====================================================
+         GAME CANVAS
+         Three.js / game rendering will use this canvas
+         ===================================================== -->
 
-    <div id="error">
-        <div>
-            <h2>ABSS Map could not start</h2>
-            <p>Please check your internet connection and reload the page.</p>
+    <canvas id="gameCanvas"></canvas>
+
+
+    <!-- =====================================================
+         LOADING SCREEN
+         ===================================================== -->
+
+    <section id="loadingScreen" aria-label="Loading ABSS Map">
+        <div id="loadingContent">
+            <h1>ABSS MAP</h1>
+            <p>Loading ABSS Institute of Technology...</p>
+            <div id="loadingBar">
+                <div id="loadingProgress"></div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <canvas id="game"></canvas>
 
-    <!-- Three.js -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+    <!-- =====================================================
+         ACCOUNT / PLAYER SETUP
+         First-time player
+         ===================================================== -->
 
-    <script>
-        "use strict";
+    <section id="accountScreen" class="screen hidden">
 
-        window.addEventListener("load", function () {
+        <div class="panel">
 
-            const loading = document.getElementById("loading");
-            const errorBox = document.getElementById("error");
-            const canvas = document.getElementById("game");
+            <h1>ABSS MAP</h1>
+            <h2>Create Your Player</h2>
 
-            // Check Three.js
-            if (typeof THREE === "undefined") {
-                loading.style.display = "none";
-                errorBox.style.display = "flex";
-                return;
-            }
+            <label for="playerName">
+                Your Name
+            </label>
 
-            // Scene
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87ceeb);
+            <input
+                id="playerName"
+                type="text"
+                maxlength="30"
+                autocomplete="name"
+                placeholder="Enter your name"
+            >
 
-            // Camera
-            const camera = new THREE.PerspectiveCamera(
-                70,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
+            <label for="playerPassword">
+                Create Password
+            </label>
 
-            camera.position.set(0, 5, 12);
+            <input
+                id="playerPassword"
+                type="password"
+                maxlength="64"
+                autocomplete="new-password"
+                placeholder="Create password"
+            >
 
-            // Renderer
-            const renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                antialias: true
-            });
+            <button id="createAccountButton" type="button">
+                Continue
+            </button>
 
-            renderer.setSize(
-                window.innerWidth,
-                window.innerHeight
-            );
+        </div>
 
-            renderer.setPixelRatio(
-                Math.min(window.devicePixelRatio, 2)
-            );
+    </section>
 
-            // Lights
-            const ambientLight = new THREE.HemisphereLight(
-                0xffffff,
-                0x444444,
-                2
-            );
 
-            scene.add(ambientLight);
+    <!-- =====================================================
+         PHOTO / CHARACTER SETUP
+         ===================================================== -->
 
-            const sun = new THREE.DirectionalLight(
-                0xffffff,
-                2
-            );
+    <section id="characterSetupScreen" class="screen hidden">
 
-            sun.position.set(20, 40, 20);
-            scene.add(sun);
+        <div class="panel">
 
-            // Ground
-            const groundGeometry =
-                new THREE.PlaneGeometry(200, 200);
+            <h1>Character Setup</h1>
 
-            const groundMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0x4d8c3a
-                });
+            <p>
+                Create your personalized ABSS character.
+            </p>
 
-            const ground =
-                new THREE.Mesh(
-                    groundGeometry,
-                    groundMaterial
-                );
+            <div id="photoUploadArea">
 
-            ground.rotation.x = -Math.PI / 2;
-            scene.add(ground);
+                <label for="facePhoto">
+                    Upload Face Photo
+                </label>
 
-            // ABSS Main Building
-            const buildingGeometry =
-                new THREE.BoxGeometry(30, 12, 12);
+                <input
+                    id="facePhoto"
+                    type="file"
+                    accept="image/*"
+                >
 
-            const buildingMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0xb64b3c
-                });
+            </div>
 
-            const building =
-                new THREE.Mesh(
-                    buildingGeometry,
-                    buildingMaterial
-                );
+            <div id="genderSelection">
 
-            building.position.set(0, 6, 0);
-            scene.add(building);
+                <h3>Select Character</h3>
 
-            // White bands
-            for (let y = 3; y <= 9; y += 3) {
+                <button
+                    id="maleButton"
+                    type="button"
+                    data-gender="male">
+                    Boy
+                </button>
 
-                const bandGeometry =
-                    new THREE.BoxGeometry(30.2, 0.25, 12.2);
+                <button
+                    id="femaleButton"
+                    type="button"
+                    data-gender="female">
+                    Girl
+                </button>
 
-                const bandMaterial =
-                    new THREE.MeshStandardMaterial({
-                        color: 0xffffff
-                    });
+            </div>
 
-                const band =
-                    new THREE.Mesh(
-                        bandGeometry,
-                        bandMaterial
-                    );
+            <button
+                id="generateCharacterButton"
+                type="button">
+                Create Character
+            </button>
 
-                band.position.set(0, y, 0);
-                scene.add(band);
-            }
+        </div>
 
-            // ABSS sign
-            const signGeometry =
-                new THREE.BoxGeometry(12, 1.5, 0.3);
+    </section>
 
-            const signMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0xffffff
-                });
 
-            const sign =
-                new THREE.Mesh(
-                    signGeometry,
-                    signMaterial
-                );
+    <!-- =====================================================
+         LOGIN SCREEN
+         ===================================================== -->
 
-            sign.position.set(0, 9.5, -6.15);
-            scene.add(sign);
+    <section id="loginScreen" class="screen hidden">
 
-            // Player
-            const playerGeometry =
-                new THREE.CapsuleGeometry(
-                    0.5,
-                    1.4,
-                    4,
-                    8
-                );
+        <div class="panel">
 
-            const playerMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0xeeeeee
-                });
+            <h1>ABSS MAP</h1>
 
-            const player =
-                new THREE.Mesh(
-                    playerGeometry,
-                    playerMaterial
-                );
+            <h2>Welcome Back</h2>
 
-            player.position.set(0, 1.2, 15);
-            scene.add(player);
+            <p id="savedPlayerName"></p>
 
-            // Camera target
-            const target = new THREE.Vector3();
+            <label for="loginPassword">
+                Password
+            </label>
 
-            function animate() {
+            <input
+                id="loginPassword"
+                type="password"
+                maxlength="64"
+                autocomplete="current-password"
+                placeholder="Enter password"
+            >
 
-                requestAnimationFrame(animate);
+            <button
+                id="loginButton"
+                type="button">
+                Enter ABSS Map
+            </button>
 
-                target.set(
-                    player.position.x,
-                    player.position.y + 1,
-                    player.position.z
-                );
+            <p id="loginError" role="alert"></p>
 
-                camera.lookAt(target);
+        </div>
 
-                renderer.render(
-                    scene,
-                    camera
-                );
-            }
+    </section>
 
-            // Resize
-            window.addEventListener(
-                "resize",
-                function () {
 
-                    camera.aspect =
-                        window.innerWidth /
-                        window.innerHeight;
+    <!-- =====================================================
+         GAME HUD
+         ===================================================== -->
 
-                    camera.updateProjectionMatrix();
+    <main id="gameUI" class="hidden">
 
-                    renderer.setSize(
-                        window.innerWidth,
-                        window.innerHeight
-                    );
-                }
-            );
+        <!-- Player information -->
 
-            loading.style.display = "none";
+        <header id="topHUD">
 
-            animate();
-        });
-    </script>
+            <div id="playerInfo">
+                <span id="playerNameDisplay">
+                    Player
+                </span>
+            </div>
+
+            <div id="mapName">
+                ABSS MAP
+            </div>
+
+            <button
+                id="menuButton"
+                type="button"
+                aria-label="Open menu">
+                ☰
+            </button>
+
+        </header>
+
+
+        <!-- =================================================
+             MINIMAP
+             ================================================= -->
+
+        <aside id="minimapContainer">
+
+            <div id="minimap">
+
+                <div id="mapPlayerMarker"></div>
+
+                <div
+                    class="mapMarker"
+                    id="collegeMarker">
+                </div>
+
+                <div
+                    class="mapMarker"
+                    id="csaHostelMarker">
+                </div>
+
+                <div
+                    class="mapMarker"
+                    id="girlsHostelMarker">
+                </div>
+
+                <div
+                    class="mapMarker"
+                    id="sportsMarker">
+                </div>
+
+                <div
+                    class="mapMarker"
+                    id="gateMarker">
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =================================================
+             MISSION / DESTINATION
+             ================================================= -->
+
+        <section id="missionHUD">
+
+            <div id="missionTitle">
+                Current Mission
+            </div>
+
+            <div id="missionText">
+                Explore ABSS Campus
+            </div>
+
+            <div id="destinationDistance">
+                --
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             INTERACTION MESSAGE
+             ================================================= -->
+
+        <div id="interactionMessage" class="hidden">
+            <span id="interactionText">
+                Interact
+            </span>
+        </div>
+
+
+        <!-- =================================================
+             GREETING / DIALOGUE
+             ================================================= -->
+
+        <section id="dialogueBox" class="hidden">
+
+            <div id="dialogueCharacterName">
+                ABSS
+            </div>
+
+            <div id="dialogueText">
+            </div>
+
+            <button
+                id="dialogueNextButton"
+                type="button">
+                Continue
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             NAVIGATION ARROW
+             ================================================= -->
+
+        <div id="navigationArrow">
+            ↑
+        </div>
+
+
+        <!-- =================================================
+             MOBILE MOVEMENT JOYSTICK
+             ================================================= -->
+
+        <div id="movementControls">
+
+            <div
+                id="joystick"
+                aria-label="Movement joystick">
+
+                <div id="joystickBase">
+                    <div id="joystickStick"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CAMERA FREE-LOOK AREA
+             Full horizontal 360° + vertical look
+             ================================================= -->
+
+        <div
+            id="lookArea"
+            aria-label="Camera free look area">
+        </div>
+
+
+        <!-- =================================================
+             ACTION BUTTONS
+             ================================================= -->
+
+        <div id="actionControls">
+
+            <button
+                id="jumpButton"
+                type="button">
+                JUMP
+            </button>
+
+            <button
+                id="runButton"
+                type="button">
+                RUN
+            </button>
+
+            <button
+                id="interactButton"
+                type="button">
+                INTERACT
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             EXTRA GAME ACTIONS
+             ================================================= -->
+
+        <div id="gameActions">
+
+            <button
+                id="mapButton"
+                type="button"
+                aria-label="Open map">
+                MAP
+            </button>
+
+            <button
+                id="missionButton"
+                type="button"
+                aria-label="Open missions">
+                MISSIONS
+            </button>
+
+        </div>
+
+    </main>
+
+
+    <!-- =====================================================
+         GAME MENU
+         ===================================================== -->
+
+    <section id="gameMenu" class="screen hidden">
+
+        <div class="panel">
+
+            <h2>ABSS MAP</h2>
+
+            <button
+                id="resumeButton"
+                type="button">
+                Resume
+            </button>
+
+            <button
+                id="settingsButton"
+                type="button">
+                Settings
+            </button>
+
+            <button
+                id="logoutButton"
+                type="button">
+                Logout
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SETTINGS
+         ===================================================== -->
+
+    <section id="settingsScreen" class="screen hidden">
+
+        <div class="panel">
+
+            <h2>Settings</h2>
+
+            <label for="cameraSensitivity">
+                Camera Sensitivity
+            </label>
+
+            <input
+                id="cameraSensitivity"
+                type="range"
+                min="0.1"
+                max="3"
+                step="0.1"
+                value="1"
+            >
+
+            <label for="graphicsQuality">
+                Graphics Quality
+            </label>
+
+            <select id="graphicsQuality">
+
+                <option value="low">
+                    Low
+                </option>
+
+                <option value="medium" selected>
+                    Medium
+                </option>
+
+                <option value="high">
+                    High
+                </option>
+
+            </select>
+
+            <button
+                id="closeSettingsButton"
+                type="button">
+                Back
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         MAP SCREEN
+         ===================================================== -->
+
+    <section id="mapScreen" class="screen hidden">
+
+        <div class="panel mapPanel">
+
+            <h2>ABSS MAP</h2>
+
+            <div id="fullMap">
+
+                <div id="fullMapPlayer"></div>
+
+                <span id="fullMapCollege">
+                    College
+                </span>
+
+                <span id="fullMapCSA">
+                    CSA Boys Hostel
+                </span>
+
+                <span id="fullMapGirls">
+                    Girls Hostel
+                </span>
+
+                <span id="fullMapSports">
+                    Sports
+                </span>
+
+                <span id="fullMapGate">
+                    Main Gate
+                </span>
+
+            </div>
+
+            <button
+                id="closeMapButton"
+                type="button">
+                Back
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         MISSIONS SCREEN
+         ===================================================== -->
+
+    <section id="missionsScreen" class="screen hidden">
+
+        <div class="panel">
+
+            <h2>ABSS Missions</h2>
+
+            <ul id="missionList">
+
+                <li data-mission="gate">
+                    Main Gate
+                </li>
+
+                <li data-mission="reception">
+                    Reception
+                </li>
+
+                <li data-mission="teachersOffice">
+                    Teachers' Office
+                </li>
+
+                <li data-mission="classroom">
+                    Classroom
+                </li>
+
+                <li data-mission="chemistryLab">
+                    Chemistry Lab
+                </li>
+
+                <li data-mission="physicsLab">
+                    Physics Lab
+                </li>
+
+                <li data-mission="sports">
+                    Sports Ground
+                </li>
+
+                <li data-mission="csaHostel">
+                    CSA Boys Hostel
+                </li>
+
+                <li data-mission="girlsHostel">
+                    Girls Hostel
+                </li>
+
+                <li data-mission="exploreCampus">
+                    Explore All Blocks
+                </li>
+
+                <li data-mission="campusExplorer">
+                    ABSS Campus Explorer
+                </li>
+
+            </ul>
+
+            <button
+                id="closeMissionsButton"
+                type="button">
+                Back
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         JAVASCRIPT WILL BE CONNECTED HERE
+         ===================================================== -->
+
+    <script src="game.js"></script>
 
 </body>
 </html>
