@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
 
   <title>ABSS Map</title>
 
@@ -17,12 +20,22 @@
     <div class="subtitle">ABSS Institute of Technology • Meerut</div>
   </div>
 
+  <div id="info">
+    <b>ABSS MAP</b><br>
+    Explore the campus
+  </div>
+
   <div id="joystick">
     <div id="stick"></div>
   </div>
 
-  <button id="jump">JUMP</button>
-  <button id="run">RUN</button>
+  <button id="jumpBtn">JUMP</button>
+  <button id="runBtn">RUN</button>
+
+  <div id="loading">
+    <div class="loader"></div>
+    <span>Loading ABSS Map...</span>
+  </div>
 
   <script type="module" src="./game.js"></script>
 
