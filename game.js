@@ -1,9 +1,7 @@
-"use strict";
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-/* =========================================================
-   ABSS MAP
-   ABSS Institute of Technology - Meerut
-   ========================================================= */
+"use strict";
 
 let scene;
 let camera;
@@ -13,2380 +11,1256 @@ let player;
 let leftLeg;
 let rightLeg;
 
-let walkCycle = 0;
+let yaw = 0;
+let pitch = 0;
 
-let cameraYaw = 0;
-let cameraPitch = 0;
-
+let walkTime = 0;
+let jumpVelocity = 0;
+let onGround = true;
 let running = false;
-let jumping = false;
-let verticalVelocity = 0;
 
-let joystickX = 0;
-let joystickY = 0;
-
-let jumpRequested = false;
+let joyX = 0;
+let joyY = 0;
 
 const keys = {};
-
 const clock = new THREE.Clock();
-
-const cameraTarget = new THREE.Vector3();
 
 const gateLeft = [];
 const gateRight = [];
 
 
-/* =========================================================
+/* =========================
    MATERIAL
-   ========================================================= */
+========================= */
 
-function mat(color){
-
+function material(color){
   return new THREE.MeshStandardMaterial({
-    color:color,
-    roughness:0.72,
-    metalness:0
+    color,
+    roughness:0.72
+  });
+}
+
+
+/* =========================
+   BOX
+========================= */
+
+function box(w,h,d,color,x,y,z){
+
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,d),
+    material(color)
+  );
+
+  m.position.set(x,y,z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+
+  scene.add(m);
+
+  return m;
+}
+
+
+/* =========================
+   WINDOW
+========================= */
+
+function window3D(x,y,z,w,h,rot=0){
+
+  const g = new THREE.Group();
+
+  const glass = new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,.12),
+    new THREE.MeshStandardMaterial({
+      color:0x63abc8,
+      roughness:.15,
+      metalness:.05
+    })
+  );
+
+  g.add(glass);
+
+  const frame = material(0xf2eee5);
+
+  const top = new THREE.Mesh(
+    new THREE.BoxGeometry(w+.2,.12,.18),
+    frame
+  );
+
+  const bottom = top.clone();
+
+  const left = new THREE.Mesh(
+    new THREE.BoxGeometry(.12,h,.18),
+    frame
+  );
+
+  const right = left.clone();
+
+  top.position.y = h/2;
+  bottom.position.y = -h/2;
+  left.position.x = -w/2;
+  right.position.x = w/2;
+
+  const midV = new THREE.Mesh(
+    new THREE.BoxGeometry(.08,h,.19),
+    frame
+  );
+
+  const midH = new THREE.Mesh(
+    new THREE.BoxGeometry(w,.08,.19),
+    frame
+  );
+
+  g.add(top,bottom,left,right,midV,midH);
+
+  g.position.set(x,y,z);
+  g.rotation.y = rot;
+
+  g.traverse(o=>{
+    if(o.isMesh){
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
   });
 
+  scene.add(g);
 }
 
 
-/* =========================================================
-   BASIC BOX
-   ========================================================= */
+/* =========================
+   BUILDING
+========================= */
 
-function makeBox(
-  width,
-  height,
-  depth,
-  color,
-  x,
-  y,
-  z
-){
+function building(x,z,w,d,name){
 
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      width,
-      height,
-      depth
-    ),
-    mat(color)
-  );
-
-  mesh.position.set(
-    x,
-    y,
-    z
-  );
-
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-
-  scene.add(mesh);
-
-  return mesh;
-
-}
-
-
-/* =========================================================
-   CYLINDER
-   ========================================================= */
-
-function makeCylinder(
-  radius,
-  height,
-  color,
-  x,
-  y,
-  z
-){
-
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      radius,
-      radius,
-      height,
-      12
-    ),
-    mat(color)
-  );
-
-  mesh.position.set(
-    x,
-    y,
-    z
-  );
-
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-
-  scene.add(mesh);
-
-  return mesh;
-
-}
-
-
-/* =========================================================
-   WINDOW
-   ========================================================= */
-
-function makeWindow(
-  x,
-  y,
-  z,
-  width,
-  height,
-  rotationY = 0
-){
-
-  const frame =
-    new THREE.MeshStandardMaterial({
-      color:0xf0eee7,
-      roughness:0.6
-    });
-
-
-  const glass =
-    new THREE.MeshStandardMaterial({
-      color:0x6faec8,
-      roughness:0.18,
-      metalness:0.05
-    });
-
-
-  const group =
-    new THREE.Group();
-
-
-  const glassMesh =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width,
-        height,
-        0.12
-      ),
-      glass
-    );
-
-
-  group.add(glassMesh);
-
-
-  const frameTop =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width + 0.22,
-        0.12,
-        0.16
-      ),
-      frame
-    );
-
-  frameTop.position.y =
-    height / 2;
-
-
-  const frameBottom =
-    frameTop.clone();
-
-  frameBottom.position.y =
-    -height / 2;
-
-
-  const frameLeft =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        0.12,
-        height,
-        0.16
-      ),
-      frame
-    );
-
-  frameLeft.position.x =
-    -width / 2;
-
-
-  const frameRight =
-    frameLeft.clone();
-
-  frameRight.position.x =
-    width / 2;
-
-
-  const vertical =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        0.08,
-        height,
-        0.18
-      ),
-      frame
-    );
-
-
-  const horizontal =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width,
-        0.08,
-        0.18
-      ),
-      frame
-    );
-
-
-  group.add(
-    frameTop,
-    frameBottom,
-    frameLeft,
-    frameRight,
-    vertical,
-    horizontal
-  );
-
-
-  group.position.set(
-    x,
-    y,
-    z
-  );
-
-  group.rotation.y =
-    rotationY;
-
-
-  group.traverse(
-    object => {
-
-      if(object.isMesh){
-
-        object.castShadow = true;
-        object.receiveShadow = true;
-
-      }
-
-    }
-  );
-
-
-  scene.add(group);
-
-  return group;
-
-}
-
-
-/* =========================================================
-   RED BUILDING
-   ========================================================= */
-
-function createABSSBuilding(
-  x,
-  z,
-  width,
-  depth,
-  name
-){
-
+  const floorH = 4.2;
   const floors = 4;
-  const floorHeight = 4.2;
-  const totalHeight =
-    floors * floorHeight;
+  const height = floorH*floors;
 
+  /* RED MAIN BLOCK */
 
-  /*
-    MAIN RED BLOCK
-  */
-
-  makeBox(
-    width,
-    totalHeight,
-    depth,
-    0xb94737,
+  box(
+    w,
+    height,
+    d,
+    0xb94335,
     x,
-    totalHeight / 2,
+    height/2,
     z
   );
 
+  /* WHITE FLOOR BANDS */
 
-  /*
-    WHITE HORIZONTAL BANDS
-    clearly separating floors
-  */
+  for(let i=1;i<floors;i++){
 
-  for(
-    let floor = 1;
-    floor < floors;
-    floor++
-  ){
-
-    makeBox(
-      width + 0.35,
-      0.28,
-      depth + 0.28,
-      0xf1eee7,
+    box(
+      w+.35,
+      .25,
+      d+.35,
+      0xf0ede5,
       x,
-      floor * floorHeight,
+      i*floorH,
       z
     );
 
   }
 
+  /* ROOF */
 
-  /*
-    WHITE ROOF
-  */
-
-  makeBox(
-    width + 0.5,
-    0.35,
-    depth + 0.5,
-    0xf4f0e8,
+  box(
+    w+.5,
+    .35,
+    d+.5,
+    0xf3efe7,
     x,
-    totalHeight + 0.18,
+    height+.18,
     z
   );
 
+  /* FRONT WINDOWS */
 
-  /*
-    WINDOWS ON FRONT
-  */
+  for(let floor=0;floor<4;floor++){
 
-  for(
-    let floor = 0;
-    floor < floors;
-    floor++
-  ){
+    const y=1.65+floor*floorH;
 
-    const windowY =
-      1.55 +
-      floor * floorHeight;
+    for(let col=-2;col<=2;col++){
 
-
-    for(
-      let column = -2;
-      column <= 2;
-      column++
-    ){
-
-      const windowX =
-        x +
-        column *
-        (width / 5.5);
-
-
-      makeWindow(
-        windowX,
-        windowY,
-        z - depth / 2 - 0.12,
-        2.35,
-        1.65,
-        0
+      window3D(
+        x+col*(w/5.5),
+        y,
+        z-d/2-.1,
+        2.25,
+        1.55
       );
 
     }
-
   }
 
+  /* BACK WINDOWS */
 
-  /*
-    WINDOWS ON BACK
-  */
+  for(let floor=0;floor<4;floor++){
 
-  for(
-    let floor = 0;
-    floor < floors;
-    floor++
-  ){
+    const y=1.65+floor*floorH;
 
-    const windowY =
-      1.55 +
-      floor * floorHeight;
+    for(let col=-2;col<=2;col++){
 
-
-    for(
-      let column = -2;
-      column <= 2;
-      column++
-    ){
-
-      const windowX =
-        x +
-        column *
-        (width / 5.5);
-
-
-      makeWindow(
-        windowX,
-        windowY,
-        z + depth / 2 + 0.12,
-        2.35,
-        1.65,
+      window3D(
+        x+col*(w/5.5),
+        y,
+        z+d/2+.1,
+        2.25,
+        1.55,
         Math.PI
       );
 
     }
-
   }
 
+  /* SIDE WINDOWS */
 
-  /*
-    SIDE WINDOWS
-  */
+  for(let floor=0;floor<4;floor++){
 
-  for(
-    let floor = 0;
-    floor < floors;
-    floor++
-  ){
+    const y=1.65+floor*floorH;
 
-    const windowY =
-      1.55 +
-      floor * floorHeight;
+    for(let row=-1;row<=1;row++){
 
-
-    for(
-      let row = -1;
-      row <= 1;
-      row++
-    ){
-
-      makeWindow(
-        x - width / 2 - 0.12,
-        windowY,
-        z + row * 7,
-        2.2,
-        1.6,
-        Math.PI / 2
+      window3D(
+        x-w/2-.1,
+        y,
+        z+row*7,
+        2.1,
+        1.5,
+        Math.PI/2
       );
 
-
-      makeWindow(
-        x + width / 2 + 0.12,
-        windowY,
-        z + row * 7,
-        2.2,
-        1.6,
-        -Math.PI / 2
+      window3D(
+        x+w/2+.1,
+        y,
+        z+row*7,
+        2.1,
+        1.5,
+        -Math.PI/2
       );
 
     }
-
   }
 
+  /* MAIN COLLEGE SPECIAL FRONT */
 
-  /*
-    CENTRAL WHITE ENTRANCE SECTION
-    ONLY FOR MAIN COLLEGE
-  */
+  if(name==="MAIN COLLEGE"){
 
-  if(name === "MAIN COLLEGE"){
-
-    makeBox(
-      25,
+    box(
+      26,
       11,
-      1.2,
-      0xf1eee8,
+      1,
+      0xf1eee7,
       x,
       5.5,
-      z - depth / 2 - 0.65
+      z-d/2-.65
     );
 
-
-    /*
-      BLUE CENTRAL GLASS
-    */
-
-    const glass =
+    const glass = new THREE.Mesh(
+      new THREE.BoxGeometry(10,7.5,.2),
       new THREE.MeshStandardMaterial({
-        color:0x55a9d0,
-        roughness:0.12,
-        metalness:0.05
-      });
-
-
-    const glassPanel =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          10,
-          7.8,
-          0.25
-        ),
-        glass
-      );
-
-
-    glassPanel.position.set(
-      x,
-      7.5,
-      z - depth / 2 - 1.35
+        color:0x5aadd1,
+        roughness:.12
+      })
     );
 
+    glass.position.set(
+      x,
+      7.2,
+      z-d/2-1.25
+    );
 
-    glassPanel.castShadow = true;
+    scene.add(glass);
 
-    scene.add(glassPanel);
+    /* GLASS DIVIDERS */
 
-
-    /*
-      GLASS CROSS FRAMES
-    */
-
-    makeBox(
-      0.25,
-      7.8,
-      0.35,
+    box(
+      .22,
+      7.5,
+      .3,
       0xffffff,
       x,
-      7.5,
-      z - depth / 2 - 1.52
+      7.2,
+      z-d/2-1.4
     );
 
-
-    makeBox(
+    box(
       10,
-      0.25,
-      0.35,
+      .22,
+      .3,
       0xffffff,
       x,
-      7.5,
-      z - depth / 2 - 1.52
+      7.2,
+      z-d/2-1.4
     );
 
+    /* ENTRANCE */
 
-    /*
-      CENTRAL ENTRANCE
-    */
-
-    makeBox(
+    box(
       5.5,
       5,
-      0.5,
-      0x74aabc,
+      .45,
+      0x6daabe,
       x,
       2.5,
-      z - depth / 2 - 1.5
+      z-d/2-1.45
     );
 
+    /* ROOF */
 
-    /*
-      WHITE ENTRANCE ROOF
-    */
-
-    makeBox(
-      28,
-      0.7,
-      7,
-      0xf2eee7,
+    box(
+      29,
+      .7,
+      6,
+      0xf2eee6,
       x,
-      10.9,
-      z - depth / 2 - 3
+      11,
+      z-d/2-3
     );
 
+    /* PILLARS */
 
-    /*
-      BIG WHITE PILLARS
-    */
+    for(const px of [-11,-5.5,5.5,11]){
 
-    const pillarX =
-      [-11,-5.5,5.5,11];
-
-
-    for(
-      const px of pillarX
-    ){
-
-      makeBox(
-        0.75,
+      box(
+        .8,
         7,
-        0.75,
+        .8,
         0xf0ece4,
-        x + px,
+        x+px,
         3.5,
-        z - depth / 2 - 4.2
+        z-d/2-4
       );
 
     }
-
   }
 
-
-  /*
-    NAME BOARD
-  */
-
-  createTextBoard(
+  board(
     name,
     x,
-    totalHeight + 1.1,
-    z - depth / 2 - 0.4,
-    Math.min(width * 0.65,25)
+    height+1.1,
+    z-d/2-.3
   );
-
 }
 
 
-/* =========================================================
-   TEXT BOARD
-   ========================================================= */
+/* =========================
+   BOARD
+========================= */
 
-function createTextBoard(
-  text,
-  x,
-  y,
-  z,
-  width
-){
+function board(text,x,y,z){
 
   const canvas =
     document.createElement("canvas");
 
+  canvas.width=1024;
+  canvas.height=180;
 
-  canvas.width = 1024;
-  canvas.height = 180;
+  const ctx=canvas.getContext("2d");
 
+  ctx.fillStyle="#f3eee6";
+  ctx.fillRect(0,0,1024,180);
 
-  const ctx =
-    canvas.getContext("2d");
+  ctx.fillStyle="#9d302a";
+  ctx.font="bold 54px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
 
-
-  ctx.fillStyle =
-    "#f3eee6";
-
-
-  ctx.fillRect(
-    0,
-    0,
-    1024,
-    180
-  );
-
-
-  ctx.fillStyle =
-    "#9f3029";
-
-
-  ctx.font =
-    "bold 58px Arial";
-
-
-  ctx.textAlign =
-    "center";
-
-
-  ctx.textBaseline =
-    "middle";
-
-
-  ctx.fillText(
-    text,
-    512,
-    90
-  );
-
+  ctx.fillText(text,512,90);
 
   const texture =
-    new THREE.CanvasTexture(
-      canvas
-    );
+    new THREE.CanvasTexture(canvas);
 
-
-  const materialBoard =
-    new THREE.MeshBasicMaterial({
-      map:texture
-    });
-
-
-  const board =
+  const mesh =
     new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width,
-        2.2
-      ),
-      materialBoard
+      new THREE.PlaneGeometry(25,2.1),
+      new THREE.MeshBasicMaterial({
+        map:texture
+      })
     );
 
+  mesh.position.set(x,y,z);
+  mesh.rotation.y=Math.PI;
 
-  board.position.set(
-    x,
-    y,
-    z
-  );
-
-
-  board.rotation.y =
-    Math.PI;
-
-
-  scene.add(board);
-
+  scene.add(mesh);
 }
 
 
-/* =========================================================
+/* =========================
    COLLEGE
-   ========================================================= */
+========================= */
 
-function buildCollege(){
+function createCollege(){
 
-  createABSSBuilding(
-    0,
-    -72,
-    58,
-    31,
+  building(
+    0,-72,58,31,
     "MAIN COLLEGE"
   );
 
-
-  createABSSBuilding(
-    -62,
-    -55,
-    40,
-    27,
+  building(
+    -62,-55,40,27,
     "MAHATMA GANDHI BLOCK"
   );
 
-
-  createABSSBuilding(
-    62,
-    -55,
-    40,
-    27,
+  building(
+    62,-55,40,27,
     "VISHVESVARAYA BLOCK"
   );
-
 }
 
 
-/* =========================================================
+/* =========================
    HOSTELS
-   ========================================================= */
+========================= */
 
-function buildHostels(){
+function createHostels(){
 
-  createABSSBuilding(
-    -82,
-    55,
-    40,
-    27,
+  building(
+    -82,55,40,27,
     "CSA BOYS HOSTEL"
   );
 
-
-  createABSSBuilding(
-    82,
-    55,
-    40,
-    27,
+  building(
+    82,55,40,27,
     "GIRLS HOSTEL"
   );
-
 }
 
 
-/* =========================================================
+/* =========================
    GROUND
-   ========================================================= */
+========================= */
 
-function buildGround(){
+function createGround(){
 
-  makeBox(
+  box(
     360,
     1,
     360,
-    0x6b9950,
-    0,
-    -0.5,
-    0
+    0x64964d,
+    0,-.5,0
   );
-
 }
 
 
-/* =========================================================
+/* =========================
    ROADS
-   ========================================================= */
+========================= */
 
-function buildRoads(){
+function createRoads(){
 
-  makeBox(
-    18,
-    0.08,
-    230,
-    0x505252,
-    0,
-    0.04,
-    0
+  box(
+    18,.08,230,
+    0x4e5150,
+    0,.04,0
   );
 
-
-  makeBox(
-    190,
-    0.08,
-    14,
-    0x505252,
-    0,
-    0.05,
-    25
+  box(
+    190,.08,14,
+    0x4e5150,
+    0,.05,25
   );
 
-
-  makeBox(
-    190,
-    0.08,
-    12,
-    0x505252,
-    0,
-    0.05,
-    82
+  box(
+    190,.08,12,
+    0x4e5150,
+    0,.05,82
   );
 
+  for(let z=-150;z<=150;z+=17){
 
-  /*
-    ROAD LINES
-  */
-
-  for(
-    let z = -155;
-    z <= 155;
-    z += 17
-  ){
-
-    makeBox(
-      1,
-      0.09,
-      7,
-      0xd8d5c8,
-      0,
-      0.10,
-      z
+    box(
+      1,.09,7,
+      0xe0ddd0,
+      0,.1,z
     );
 
   }
-
 }
 
 
-/* =========================================================
-   MAIN GATE
-   ========================================================= */
+/* =========================
+   TREES
+========================= */
 
-function buildGate(){
+function tree(x,z,s=1){
 
-  makeBox(
-    7,
-    14,
-    7,
-    0x8c4032,
-    -18,
-    7,
-    112
-  );
-
-
-  makeBox(
-    7,
-    14,
-    7,
-    0x8c4032,
-    18,
-    7,
-    112
-  );
-
-
-  makeBox(
-    7.5,
-    1,
-    1,
-    0xf0ece4,
-    -18,
-    14.5,
-    112
-  );
-
-
-  makeBox(
-    7.5,
-    1,
-    1,
-    0xf0ece4,
-    18,
-    14.5,
-    112
-  );
-
-
-  createTextBoard(
-    "ABSS INSTITUTE OF TECHNOLOGY",
-    0,
-    17,
-    111.4,
-    31
-  );
-
-
-  const gateMaterial =
-    mat(0x29363b);
-
-
-  const left =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        15,
-        4.5,
-        0.45
-      ),
-      gateMaterial
-    );
-
-
-  left.position.set(
-    -10,
-    3,
-    112
-  );
-
-
-  scene.add(left);
-
-  gateLeft.push(left);
-
-
-  const right =
-    left.clone();
-
-
-  right.position.x =
-    10;
-
-
-  scene.add(right);
-
-  gateRight.push(right);
-
-}
-
-
-/* =========================================================
-   TREE
-   ========================================================= */
-
-function createTree(
-  x,
-  z,
-  scale = 1
-){
-
-  makeCylinder(
-    0.45 * scale,
-    3 * scale,
-    0x70492c,
+  box(
+    .45*s,
+    3*s,
+    .45*s,
+    0x70482c,
     x,
-    1.5 * scale,
+    1.5*s,
     z
   );
-
 
   const leaves =
     new THREE.Mesh(
       new THREE.SphereGeometry(
-        2.3 * scale,
-        12,
-        10
+        2.2*s,12,10
       ),
-      mat(0x3d783b)
+      material(0x39753a)
     );
-
 
   leaves.position.set(
     x,
-    4 * scale,
+    4*s,
     z
   );
 
-
-  leaves.castShadow = true;
+  leaves.castShadow=true;
 
   scene.add(leaves);
-
 }
 
 
-/* =========================================================
+/* =========================
    GARDEN
-   ========================================================= */
+========================= */
 
-function buildGarden(){
+function createGarden(){
 
-  for(
-    let i = 0;
-    i < 65;
-    i++
-  ){
+  for(let i=0;i<60;i++){
 
-    const x =
-      ((i * 47) % 300) - 150;
-
-
-    const z =
-      ((i * 71) % 250) - 125;
-
+    const x=((i*47)%300)-150;
+    const z=((i*71)%250)-125;
 
     if(
-      Math.abs(x) < 28 &&
-      Math.abs(z + 72) < 28
-    ){
+      Math.abs(x)<35 &&
+      Math.abs(z+72)<30
+    ) continue;
 
-      continue;
-
-    }
-
-
-    createTree(
+    tree(
       x,
       z,
-      0.65 + (i % 4) * 0.1
+      .65+(i%4)*.1
     );
-
   }
-
-
-  /*
-    HEDGE
-  */
-
-  for(
-    let x = -110;
-    x <= 110;
-    x += 7
-  ){
-
-    makeBox(
-      4,
-      1,
-      1.2,
-      0x477f3d,
-      x,
-      0.5,
-      -108
-    );
-
-  }
-
 }
 
 
-/* =========================================================
+/* =========================
    SPORTS
-   ========================================================= */
+========================= */
 
-function buildSports(){
+function createSports(){
 
-  makeBox(
-    48,
-    0.12,
-    27,
-    0xa64c37,
-    0,
-    0.08,
-    43
+  box(
+    48,.12,27,
+    0xa94c38,
+    0,.08,43
   );
 
-
-  makeBox(
-    40,
-    0.12,
-    21,
-    0x467e9d,
-    0,
-    0.1,
-    80
+  box(
+    40,.12,21,
+    0x477f9d,
+    0,.1,80
   );
-
-
-  for(
-    let x = -20;
-    x <= 20;
-    x += 10
-  ){
-
-    makeBox(
-      0.08,
-      0.18,
-      27,
-      0xffffff,
-      x,
-      0.16,
-      43
-    );
-
-  }
-
 }
 
 
-/* =========================================================
+/* =========================
+   GATE
+========================= */
+
+function createGate(){
+
+  box(
+    7,14,7,
+    0x8e4032,
+    -18,7,112
+  );
+
+  box(
+    7,14,7,
+    0x8e4032,
+    18,7,112
+  );
+
+  board(
+    "ABSS INSTITUTE OF TECHNOLOGY",
+    0,
+    17,
+    111.4
+  );
+
+  const left=box(
+    15,4.5,.45,
+    0x26383e,
+    -10,3,112
+  );
+
+  const right=box(
+    15,4.5,.45,
+    0x26383e,
+    10,3,112
+  );
+
+  gateLeft.push(left);
+  gateRight.push(right);
+}
+
+
+/* =========================
    PLAYER
-   ========================================================= */
+========================= */
 
 function createPlayer(){
 
-  player =
-    new THREE.Group();
+  player=new THREE.Group();
 
-
-  /*
-    BODY
-  */
-
-  const body =
-    new THREE.Mesh(
-      new THREE.CapsuleGeometry(
-        0.55,
-        1.2,
-        5,
-        10
-      ),
-      mat(0xf0f0f0)
-    );
-
-
-  body.position.y =
-    1.55;
-
-
-  body.castShadow = true;
-
-  player.add(body);
-
-
-  /*
-    ABSS SHIRT
-  */
-
-  const shirt =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.15,
-        0.85,
-        0.7
-      ),
-      mat(0xf8f8f8)
-    );
-
-
-  shirt.position.y =
-    1.75;
-
-
-  shirt.castShadow = true;
-
-  player.add(shirt);
-
-
-  /*
-    HEAD
-  */
-
-  const head =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.44,
-        16,
-        12
-      ),
-      mat(0xd49a72)
-    );
-
-
-  head.position.y =
-    2.75;
-
-
-  head.castShadow = true;
-
-  player.add(head);
-
-
-  /*
-    LEGS
-  */
-
-  leftLeg =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        0.36,
-        1.1,
-        0.42
-      ),
-      mat(0x20252b)
-    );
-
-
-  leftLeg.position.set(
-    -0.23,
-    0.55,
-    0
+  const body=new THREE.Mesh(
+    new THREE.CapsuleGeometry(
+      .52,1.2,5,10
+    ),
+    material(0xeeeeee)
   );
 
+  body.position.y=1.5;
+  player.add(body);
 
-  leftLeg.castShadow = true;
+  const shirt=box(
+    1.15,.85,.7,
+    0xf5f5f5,
+    0,1.75,0
+  );
+
+  /* remove from scene because box adds globally */
+
+  scene.remove(shirt);
+  player.add(shirt);
+
+  const head=new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .43,16,12
+    ),
+    material(0xd49a72)
+  );
+
+  head.position.y=2.7;
+  player.add(head);
+
+  leftLeg=new THREE.Mesh(
+    new THREE.BoxGeometry(
+      .36,1.1,.42
+    ),
+    material(0x20252b)
+  );
+
+  leftLeg.position.set(
+    -.23,.55,0
+  );
 
   player.add(leftLeg);
 
+  rightLeg=leftLeg.clone();
 
-  rightLeg =
-    leftLeg.clone();
-
-
-  rightLeg.position.x =
-    0.23;
-
+  rightLeg.position.x=.23;
 
   player.add(rightLeg);
 
-
-  /*
-    START NEAR MAIN GATE
-  */
-
   player.position.set(
-    0,
-    0,
-    100
+    0,0,100
   );
 
-
   scene.add(player);
-
 }
 
 
-/* =========================================================
-   KEYBOARD
-   ========================================================= */
+/* =========================
+   INPUT
+========================= */
 
 function setupKeyboard(){
 
-  window.addEventListener(
+  addEventListener(
     "keydown",
-    event => {
-
-      keys[event.code] =
-        true;
-
+    e=>{
+      keys[e.code]=true;
 
       if(
-        event.code === "ShiftLeft" ||
-        event.code === "ShiftRight"
+        e.code==="ShiftLeft" ||
+        e.code==="ShiftRight"
       ){
-
-        running = true;
-
+        running=true;
       }
-
-
-      if(
-        event.code === "Space"
-      ){
-
-        jumpRequested = true;
-
-      }
-
     }
   );
 
-
-  window.addEventListener(
+  addEventListener(
     "keyup",
-    event => {
-
-      keys[event.code] =
-        false;
-
+    e=>{
+      keys[e.code]=false;
 
       if(
-        event.code === "ShiftLeft" ||
-        event.code === "ShiftRight"
+        e.code==="ShiftLeft" ||
+        e.code==="ShiftRight"
       ){
-
-        running = false;
-
+        running=false;
       }
-
     }
   );
-
 }
 
 
-/* =========================================================
+/* =========================
    JOYSTICK
-   ========================================================= */
+========================= */
 
 function setupJoystick(){
 
-  const base =
-    document.getElementById(
-      "joystick"
-    );
+  const base=
+    document.getElementById("joystick");
 
+  const stick=
+    document.getElementById("stick");
 
-  const stick =
-    document.getElementById(
-      "stick"
-    );
+  let active=false;
 
+  function move(e){
 
-  let active = false;
+    if(!active)return;
 
-
-  function update(e){
-
-    if(!active){
-      return;
-    }
-
-
-    const rect =
+    const r=
       base.getBoundingClientRect();
 
+    const t=
+      e.touches ? e.touches[0] : e;
 
-    const touch =
-      e.touches
-        ? e.touches[0]
-        : e;
+    let dx=
+      t.clientX-
+      (r.left+r.width/2);
 
+    let dy=
+      t.clientY-
+      (r.top+r.height/2);
 
-    let dx =
-      touch.clientX -
-      (
-        rect.left +
-        rect.width / 2
-      );
+    const max=40;
 
+    const len=
+      Math.hypot(dx,dy);
 
-    let dy =
-      touch.clientY -
-      (
-        rect.top +
-        rect.height / 2
-      );
+    if(len>max){
 
-
-    const max =
-      40;
-
-
-    const length =
-      Math.hypot(
-        dx,
-        dy
-      );
-
-
-    if(length > max){
-
-      dx =
-        dx / length * max;
-
-      dy =
-        dy / length * max;
+      dx=dx/len*max;
+      dy=dy/len*max;
 
     }
 
+    joyX=dx/max;
+    joyY=dy/max;
 
-    joystickX =
-      dx / max;
-
-
-    joystickY =
-      dy / max;
-
-
-    stick.style.transform =
-      `translate(${dx}px, ${dy}px)`;
-
+    stick.style.transform=
+      `translate(${dx}px,${dy}px)`;
   }
 
+  function stop(){
 
-  function reset(){
+    active=false;
+    joyX=0;
+    joyY=0;
 
-    active = false;
-
-    joystickX = 0;
-    joystickY = 0;
-
-    stick.style.transform =
+    stick.style.transform=
       "translate(0,0)";
-
   }
-
 
   base.addEventListener(
     "touchstart",
-    e => {
-
-      active = true;
-
-      update(e);
-
+    e=>{
+      active=true;
+      move(e);
     },
     {passive:false}
   );
-
 
   base.addEventListener(
     "touchmove",
-    e => {
-
+    e=>{
       e.preventDefault();
-
-      update(e);
-
+      move(e);
     },
     {passive:false}
   );
 
-
   base.addEventListener(
     "touchend",
-    reset
+    stop
   );
-
 
   base.addEventListener(
     "touchcancel",
-    reset
+    stop
   );
-
 }
 
 
-/* =========================================================
+/* =========================
    FREE LOOK
-   ========================================================= */
+========================= */
 
 function setupLook(){
 
-  const screen =
-    renderer.domElement;
+  let active=false;
+  let lastX=0;
+  let lastY=0;
 
-
-  let looking = false;
-
-  let lastX = 0;
-  let lastY = 0;
-
-
-  screen.addEventListener(
+  renderer.domElement.addEventListener(
     "touchstart",
-    event => {
+    e=>{
 
-      const touch =
-        event.touches[0];
-
-
-      /*
-        Right side = camera look
-      */
+      const t=e.touches[0];
 
       if(
-        touch.clientX >
-        window.innerWidth * 0.35
+        t.clientX>
+        window.innerWidth*.35
       ){
 
-        looking = true;
+        active=true;
 
-        lastX =
-          touch.clientX;
-
-        lastY =
-          touch.clientY;
-
+        lastX=t.clientX;
+        lastY=t.clientY;
       }
-
     },
     {passive:true}
   );
 
-
-  screen.addEventListener(
+  renderer.domElement.addEventListener(
     "touchmove",
-    event => {
+    e=>{
 
-      if(!looking){
-        return;
-      }
+      if(!active)return;
 
+      const t=e.touches[0];
 
-      const touch =
-        event.touches[0];
+      const dx=t.clientX-lastX;
+      const dy=t.clientY-lastY;
 
+      yaw-=dx*.006;
+      pitch-=dy*.006;
 
-      const dx =
-        touch.clientX -
-        lastX;
-
-
-      const dy =
-        touch.clientY -
-        lastY;
-
-
-      cameraYaw -=
-        dx * 0.006;
-
-
-      cameraPitch -=
-        dy * 0.006;
-
-
-      /*
-        Almost full vertical look
-      */
-
-      cameraPitch =
+      pitch=
         THREE.MathUtils.clamp(
-          cameraPitch,
+          pitch,
           -1.48,
           1.48
         );
 
-
-      lastX =
-        touch.clientX;
-
-
-      lastY =
-        touch.clientY;
-
+      lastX=t.clientX;
+      lastY=t.clientY;
     },
     {passive:true}
   );
 
-
-  screen.addEventListener(
+  renderer.domElement.addEventListener(
     "touchend",
-    () => {
-
-      looking = false;
-
-    },
-    {passive:true}
-  );
-
-
-  /*
-    PC mouse
-  */
-
-  let mouseLooking =
-    false;
-
-
-  screen.addEventListener(
-    "pointerdown",
-    event => {
-
-      if(
-        event.pointerType !== "mouse"
-      ){
-        return;
-      }
-
-
-      mouseLooking = true;
-
-      lastX =
-        event.clientX;
-
-      lastY =
-        event.clientY;
-
+    ()=>{
+      active=false;
     }
   );
-
-
-  screen.addEventListener(
-    "pointermove",
-    event => {
-
-      if(!mouseLooking){
-        return;
-      }
-
-
-      const dx =
-        event.clientX -
-        lastX;
-
-
-      const dy =
-        event.clientY -
-        lastY;
-
-
-      cameraYaw -=
-        dx * 0.006;
-
-
-      cameraPitch -=
-        dy * 0.006;
-
-
-      cameraPitch =
-        THREE.MathUtils.clamp(
-          cameraPitch,
-          -1.48,
-          1.48
-        );
-
-
-      lastX =
-        event.clientX;
-
-
-      lastY =
-        event.clientY;
-
-    }
-  );
-
-
-  screen.addEventListener(
-    "pointerup",
-    () => {
-
-      mouseLooking = false;
-
-    }
-  );
-
 }
 
 
-/* =========================================================
+/* =========================
    BUTTONS
-   ========================================================= */
+========================= */
 
 function setupButtons(){
 
-  const jump =
-    document.getElementById(
-      "jump"
-    );
+  const jump=
+    document.getElementById("jump");
 
-
-  const run =
-    document.getElementById(
-      "run"
-    );
-
+  const run=
+    document.getElementById("run");
 
   jump.addEventListener(
     "touchstart",
-    event => {
+    e=>{
+      e.preventDefault();
 
-      event.preventDefault();
+      if(onGround){
 
-      jumpRequested = true;
-
+        jumpVelocity=9;
+        onGround=false;
+      }
     },
     {passive:false}
   );
-
 
   run.addEventListener(
     "touchstart",
-    event => {
-
-      event.preventDefault();
-
-      running = true;
-
+    e=>{
+      e.preventDefault();
+      running=true;
     },
     {passive:false}
   );
 
-
   run.addEventListener(
     "touchend",
-    () => {
-
-      running = false;
-
+    ()=>{
+      running=false;
     }
   );
-
 
   run.addEventListener(
     "touchcancel",
-    () => {
-
-      running = false;
-
+    ()=>{
+      running=false;
     }
   );
-
 }
 
 
-/* =========================================================
-   INPUT
-   ========================================================= */
-
-function getInput(){
-
-  let x =
-    joystickX;
-
-
-  let z =
-    joystickY;
-
-
-  if(
-    keys.KeyA ||
-    keys.ArrowLeft
-  ){
-
-    x -= 1;
-
-  }
-
-
-  if(
-    keys.KeyD ||
-    keys.ArrowRight
-  ){
-
-    x += 1;
-
-  }
-
-
-  if(
-    keys.KeyW ||
-    keys.ArrowUp
-  ){
-
-    z -= 1;
-
-  }
-
-
-  if(
-    keys.KeyS ||
-    keys.ArrowDown
-  ){
-
-    z += 1;
-
-  }
-
-
-  const length =
-    Math.hypot(
-      x,
-      z
-    );
-
-
-  if(length > 1){
-
-    x /= length;
-    z /= length;
-
-  }
-
-
-  return {
-    x:x,
-    z:z
-  };
-
-}
-
-
-/* =========================================================
+/* =========================
    PLAYER UPDATE
-   ========================================================= */
+========================= */
 
 function updatePlayer(dt){
 
-  const input =
-    getInput();
+  let x=joyX;
+  let z=joyY;
 
+  if(keys.KeyA || keys.ArrowLeft)x-=1;
+  if(keys.KeyD || keys.ArrowRight)x+=1;
+  if(keys.KeyW || keys.ArrowUp)z-=1;
+  if(keys.KeyS || keys.ArrowDown)z+=1;
 
-  const moving =
-    Math.hypot(
-      input.x,
-      input.z
-    ) > 0.08;
+  const len=Math.hypot(x,z);
 
+  if(len>1){
+    x/=len;
+    z/=len;
+  }
 
-  const speed =
-    running
-      ? 13
-      : 6.5;
+  const moving=
+    Math.hypot(x,z)>.08;
 
+  const speed=
+    running ? 13 : 6.5;
 
-  /*
-    CAMERA BASED MOVEMENT
-  */
+  /* CAMERA BASED MOVEMENT */
 
-  const cos =
-    Math.cos(cameraYaw);
+  const c=Math.cos(yaw);
+  const s=Math.sin(yaw);
 
+  const mx=
+    x*c+z*s;
 
-  const sin =
-    Math.sin(cameraYaw);
+  const mz=
+    -x*s+z*c;
 
+  player.position.x+=
+    mx*speed*dt;
 
-  const moveX =
-    input.x * cos +
-    input.z * sin;
-
-
-  const moveZ =
-    -input.x * sin +
-    input.z * cos;
-
-
-  player.position.x +=
-    moveX *
-    speed *
-    dt;
-
-
-  player.position.z +=
-    moveZ *
-    speed *
-    dt;
-
-
-  /*
-    CHARACTER FACES MOVEMENT
-  */
+  player.position.z+=
+    mz*speed*dt;
 
   if(moving){
 
-    player.rotation.y =
-      Math.atan2(
-        moveX,
-        moveZ
-      );
+    player.rotation.y=
+      Math.atan2(mx,mz);
 
-  }
+    walkTime+=
+      dt*(running?15:9);
 
+    const swing=
+      Math.sin(walkTime)*
+      (running?.65:.42);
 
-  /*
-    JUMP
-  */
+    leftLeg.rotation.x=swing;
+    rightLeg.rotation.x=-swing;
 
-  if(
-    jumpRequested &&
-    !jumping
-  ){
+  }else{
 
-    verticalVelocity =
-      9;
-
-
-    jumping = true;
-
-    jumpRequested =
-      false;
-
-  }
-
-
-  verticalVelocity -=
-    24 * dt;
-
-
-  player.position.y +=
-    verticalVelocity * dt;
-
-
-  if(
-    player.position.y <= 0
-  ){
-
-    player.position.y =
-      0;
-
-
-    verticalVelocity =
-      0;
-
-
-    jumping =
-      false;
-
-  }
-
-
-  /*
-    MAP BOUNDARY
-  */
-
-  player.position.x =
-    THREE.MathUtils.clamp(
-      player.position.x,
-      -165,
-      165
-    );
-
-
-  player.position.z =
-    THREE.MathUtils.clamp(
-      player.position.z,
-      -165,
-      165
-    );
-
-
-  /*
-    LEG ANIMATION
-  */
-
-  if(
-    moving &&
-    !jumping
-  ){
-
-    walkCycle +=
-      dt *
-      (
-        running
-          ? 15
-          : 9
-      );
-
-
-    const swing =
-      Math.sin(
-        walkCycle
-      ) *
-      (
-        running
-          ? 0.65
-          : 0.42
-      );
-
-
-    leftLeg.rotation.x =
-      swing;
-
-
-    rightLeg.rotation.x =
-      -swing;
-
-  }
-  else{
-
-    leftLeg.rotation.x =
+    leftLeg.rotation.x=
       THREE.MathUtils.lerp(
         leftLeg.rotation.x,
         0,
-        Math.min(
-          1,
-          dt * 10
-        )
+        dt*10
       );
 
-
-    rightLeg.rotation.x =
+    rightLeg.rotation.x=
       THREE.MathUtils.lerp(
         rightLeg.rotation.x,
         0,
-        Math.min(
-          1,
-          dt * 10
-        )
+        dt*10
       );
-
   }
 
+  /* JUMP PHYSICS */
 
-  /*
-    AUTOMATIC GATE
-  */
+  if(!onGround){
 
-  const distanceFromGate =
-    Math.hypot(
+    jumpVelocity-=24*dt;
+
+    player.position.y+=
+      jumpVelocity*dt;
+
+    if(player.position.y<=0){
+
+      player.position.y=0;
+      jumpVelocity=0;
+      onGround=true;
+    }
+  }
+
+  /* MAP LIMIT */
+
+  player.position.x=
+    THREE.MathUtils.clamp(
       player.position.x,
-      player.position.z - 112
+      -165,165
     );
 
+  player.position.z=
+    THREE.MathUtils.clamp(
+      player.position.z,
+      -165,165
+    );
 
-  const open =
-    distanceFromGate < 22;
+  /* GATE */
 
+  const gd=
+    Math.hypot(
+      player.position.x,
+      player.position.z-112
+    );
 
-  const offset =
-    open
-      ? 5
-      : 0;
+  const open=gd<24;
 
+  const gap=open?6:0;
 
-  for(
-    const gate of gateLeft
-  ){
-
-    gate.position.x =
+  gateLeft.forEach(g=>{
+    g.position.x=
       THREE.MathUtils.lerp(
-        gate.position.x,
-        -10 - offset,
-        Math.min(
-          1,
-          dt * 6
-        )
+        g.position.x,
+        -10-gap,
+        dt*7
       );
+  });
 
-  }
-
-
-  for(
-    const gate of gateRight
-  ){
-
-    gate.position.x =
+  gateRight.forEach(g=>{
+    g.position.x=
       THREE.MathUtils.lerp(
-        gate.position.x,
-        10 + offset,
-        Math.min(
-          1,
-          dt * 6
-        )
+        g.position.x,
+        10+gap,
+        dt*7
       );
-
-  }
-
+  });
 }
 
 
-/* =========================================================
+/* =========================
    CAMERA
-   ========================================================= */
+========================= */
 
 function updateCamera(dt){
 
-  const distance =
-    8.5;
+  const distance=9;
 
+  const horizontal=
+    Math.cos(pitch)*distance;
 
-  const horizontal =
-    Math.cos(
-      cameraPitch
-    ) *
-    distance;
+  const vertical=
+    Math.sin(pitch)*distance;
 
+  const cx=
+    player.position.x+
+    Math.sin(yaw)*horizontal;
 
-  const vertical =
-    Math.sin(
-      cameraPitch
-    ) *
-    distance;
+  const cy=
+    player.position.y+
+    2.8+
+    vertical;
 
-
-  cameraTarget.set(
-
-    player.position.x +
-      Math.sin(cameraYaw) *
-      horizontal,
-
-    player.position.y +
-      2.9 +
-      vertical,
-
-    player.position.z +
-      Math.cos(cameraYaw) *
-      horizontal
-
-  );
-
+  const cz=
+    player.position.z+
+    Math.cos(yaw)*horizontal;
 
   camera.position.lerp(
-    cameraTarget,
-    Math.min(
-      1,
-      dt * 9
-    )
+    new THREE.Vector3(
+      cx,cy,cz
+    ),
+    Math.min(1,dt*8)
   );
-
 
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.45,
+    player.position.y+1.5,
     player.position.z
   );
-
 }
 
 
-/* =========================================================
-   LOCATION HUD
-   ========================================================= */
+/* =========================
+   LOCATION
+========================= */
 
-function updateLocation(){
+function location(){
 
-  const x =
-    player.position.x;
+  const x=player.position.x;
+  const z=player.position.z;
 
-
-  const z =
-    player.position.z;
-
-
-  let location =
-    "Main Campus";
-
+  let text="Main Campus";
 
   if(
-    z < -35 &&
-    Math.abs(x) < 35
+    z<-35 &&
+    Math.abs(x)<35
   ){
-
-    location =
-      "Main College";
-
+    text="Main College";
   }
   else if(
-    z > 30 &&
-    x < -55
+    z>30 &&
+    x<-55
   ){
-
-    location =
-      "CSA Boys Hostel";
-
+    text="CSA Boys Hostel";
   }
   else if(
-    z > 30 &&
-    x > 55
+    z>30 &&
+    x>55
   ){
-
-    location =
-      "Girls Hostel";
-
+    text="Girls Hostel";
   }
   else if(
-    z > 25 &&
-    Math.abs(x) < 30
+    z>25 &&
+    Math.abs(x)<30
   ){
-
-    location =
-      "Sports Area";
-
+    text="Sports Area";
   }
-
 
   document.getElementById(
     "place"
-  ).textContent =
-    location;
-
+  ).textContent=text;
 }
 
 
-/* =========================================================
+/* =========================
    INIT
-   ========================================================= */
+========================= */
 
 function init(){
 
-  scene =
-    new THREE.Scene();
+  scene=new THREE.Scene();
 
+  scene.background=
+    new THREE.Color(0x80c8e8);
 
-  scene.background =
-    new THREE.Color(
-      0x87cbed
-    );
-
-
-  scene.fog =
+  scene.fog=
     new THREE.Fog(
-      0x87cbed,
-      100,
+      0x80c8e8,
+      120,
       350
     );
 
-
-  camera =
+  camera=
     new THREE.PerspectiveCamera(
       70,
-      window.innerWidth /
-      window.innerHeight,
-      0.1,
+      innerWidth/innerHeight,
+      .1,
       600
     );
 
-
-  renderer =
+  renderer=
     new THREE.WebGLRenderer({
       antialias:false,
-      powerPreference:
-        "high-performance"
+      powerPreference:"high-performance"
     });
 
-
   renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
+    innerWidth,
+    innerHeight
   );
-
 
   renderer.setPixelRatio(
     Math.min(
-      window.devicePixelRatio,
+      devicePixelRatio,
       1.5
     )
   );
 
-
-  renderer.shadowMap.enabled =
-    true;
-
-
-  renderer.shadowMap.type =
-    THREE.PCFSoftShadowMap;
-
+  renderer.shadowMap.enabled=true;
 
   document.body.appendChild(
     renderer.domElement
   );
 
-
-  /*
-    LIGHT
-  */
+  /* LIGHT */
 
   scene.add(
     new THREE.HemisphereLight(
-      0xe4f5ff,
-      0x557348,
-      2.3
+      0xe5f6ff,
+      0x557548,
+      2.4
     )
   );
 
-
-  const sun =
+  const sun=
     new THREE.DirectionalLight(
       0xffffff,
-      2.6
+      2.5
     );
 
-
   sun.position.set(
-    80,
-    130,
-    70
+    80,130,70
   );
 
-
-  sun.castShadow =
-    true;
-
-
-  sun.shadow.mapSize.set(
-    1024,
-    1024
-  );
-
-
-  sun.shadow.camera.left =
-    -180;
-
-
-  sun.shadow.camera.right =
-    180;
-
-
-  sun.shadow.camera.top =
-    180;
-
-
-  sun.shadow.camera.bottom =
-    -180;
-
+  sun.castShadow=true;
 
   scene.add(sun);
 
+  /* WORLD */
 
-  /*
-    BUILD WORLD
-  */
-
-  buildGround();
-  buildRoads();
-
-  buildCollege();
-  buildHostels();
-
-  buildGate();
-
-  buildGarden();
-  buildSports();
-
+  createGround();
+  createRoads();
+  createCollege();
+  createHostels();
+  createGate();
+  createGarden();
+  createSports();
   createPlayer();
 
-
-  /*
-    CONTROLS
-  */
+  /* CONTROLS */
 
   setupKeyboard();
   setupJoystick();
   setupLook();
   setupButtons();
 
-
-  window.addEventListener(
+  addEventListener(
     "resize",
     resize
   );
 
-
   animate();
-
 }
 
 
-/* =========================================================
+/* =========================
    RESIZE
-   ========================================================= */
+========================= */
 
 function resize(){
 
-  camera.aspect =
-    window.innerWidth /
-    window.innerHeight;
-
+  camera.aspect=
+    innerWidth/innerHeight;
 
   camera.updateProjectionMatrix();
 
-
   renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
+    innerWidth,
+    innerHeight
   );
-
 }
 
 
-/* =========================================================
-   GAME LOOP
-   ========================================================= */
+/* =========================
+   LOOP
+========================= */
 
 function animate(){
 
@@ -2394,31 +1268,25 @@ function animate(){
     animate
   );
 
-
-  const dt =
+  const dt=
     Math.min(
       clock.getDelta(),
-      0.05
+      .05
     );
 
-
   updatePlayer(dt);
-
   updateCamera(dt);
-
-  updateLocation();
-
+  location();
 
   renderer.render(
     scene,
     camera
   );
-
 }
 
 
-/* =========================================================
+/* =========================
    START
-   ========================================================= */
+========================= */
 
 init();
