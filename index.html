@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>ABSS Map</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <div id="loading">Loading ABSS Map...</div>
-
   <div id="hud">
-    <b>ABSS MAP</b>
-    <span id="location">Main Campus</span>
+    <div class="title">ABSS MAP</div>
+    <div id="place">Main Campus</div>
   </div>
 
-  <div id="lookHint">Drag right side to look around</div>
+  <div id="lookText">
+    Drag screen to look
+  </div>
 
   <div id="crosshair">+</div>
 
@@ -27,7 +30,8 @@
   <button id="jump">JUMP</button>
   <button id="run">RUN</button>
 
-  <script type="module" src="game.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+  <script src="game.js"></script>
 
 </body>
 </html>
