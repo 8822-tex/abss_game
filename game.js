@@ -1,41 +1,22 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-let scene, camera, renderer, player;
+window.addEventListener("error", (event) => {
+  const loading = document.getElementById("loadingText");
 
-let leftLeg;
-let rightLeg;
-let walkCycle = 0;
+  if (loading) {
+    loading.textContent =
+      "ABSS Map Error: " + event.message;
+  }
+});
 
-let cameraYaw = 0;
-let cameraPitch = 0;
+window.addEventListener("unhandledrejection", (event) => {
+  const loading = document.getElementById("loadingText");
 
-let running = false;
-let onGround = true;
-let verticalVelocity = 0;
-let jumpQueued = false;
-
-let joystickX = 0;
-let joystickY = 0;
-
-let keys = {};
-
-let lookPointer = null;
-let lookLastX = 0;
-let lookLastY = 0;
-
-const tmp = new THREE.Vector3();
-const clock = new THREE.Clock();
-
-const gateLeft = [];
-const gateRight = [];
-
-
-function material(color, roughness = 0.75){
-
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness
-  });
+  if (loading) {
+    loading.textContent =
+      "ABSS Map Error: " + event.reason;
+  }
+});
 
 }
 
