@@ -5,43 +5,36 @@
 
     <meta name="viewport"
           content="width=device-width,
-                   initial-scale=1.0,
-                   maximum-scale=1.0,
-                   user-scalable=no">
+          initial-scale=1.0,
+          maximum-scale=1.0,
+          user-scalable=no">
 
     <title>ABSS Map</title>
 
-    <!-- CSS CONNECT -->
-    <link rel="stylesheet" href="style.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
 
-    <!-- GAME -->
+    <!-- Game container -->
     <div id="game"></div>
 
-    <!-- LOADING -->
+    <!-- Loading screen -->
     <div id="loading">
         <h1>ABSS Map</h1>
         <p>Loading game...</p>
     </div>
 
-    <!-- ERROR -->
+    <!-- Error box -->
     <div id="error"></div>
 
 
-    <!-- THREE.JS CONNECTION -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
-        }
-    }
-    </script>
+    <!-- THREE.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 
-
-    <!-- GAME.JS CONNECT -->
-    <script type="module" src="game.js"></script>
+    <!-- GAME JAVASCRIPT -->
+    <script src="./game.js"></script>
 
 </body>
 </html>
