@@ -2,13 +2,16 @@ import * as THREE from
   "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 /* =========================================================
-   ABSS MAP — EXTERIOR BUILD
+   ABSS MAP — EXTERIOR + PLAYER WALK ANIMATION
    ========================================================= */
 
 let scene, camera, renderer, player;
 let velocityY = 0;
 let onGround = true;
 let running = false;
+
+let leg1, leg2;
+let walkCycle = 0;
 
 const keys = {
   forward: false,
@@ -30,14 +33,20 @@ const clock = new THREE.Clock();
 init();
 animate();
 
-/* ---------- INIT ---------- */
+/* =========================================================
+   INIT
+   ========================================================= */
 
 function init() {
 
   scene = new THREE.Scene();
 
   scene.background = new THREE.Color(0x8dbbd2);
-  scene.fog = new THREE.Fog(0x8dbbd2, 160, 480);
+  scene.fog = new THREE.Fog(
+    0x8dbbd2,
+    160,
+    480
+  );
 
   camera = new THREE.PerspectiveCamera(
     60,
@@ -66,7 +75,9 @@ function init() {
   renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
-  document.body.appendChild(renderer.domElement);
+  document.body.appendChild(
+    renderer.domElement
+  );
 
   /* LIGHT */
 
@@ -132,7 +143,10 @@ function init() {
    MATERIAL
    ========================================================= */
 
-function mat(color, roughness = 0.8) {
+function mat(
+  color,
+  roughness = 0.8
+) {
 
   return new THREE.MeshStandardMaterial({
     color,
@@ -273,7 +287,7 @@ function createCampusRoads() {
 }
 
 /* =========================================================
-   BUILDING CORE
+   BUILDING
    ========================================================= */
 
 function createBlock(
@@ -288,8 +302,6 @@ function createBlock(
   const floorHeight = 4.2;
   const totalHeight =
     floors * floorHeight;
-
-  /* MAIN RED BODY */
 
   const body =
     new THREE.Mesh(
@@ -311,8 +323,6 @@ function createBlock(
   body.receiveShadow = true;
 
   scene.add(body);
-
-  /* WHITE FLOOR BANDS */
 
   for (
     let f = 1;
@@ -340,8 +350,6 @@ function createBlock(
 
   }
 
-  /* SIDE WHITE COLUMNS */
-
   for (
     const side of [-1, 1]
   ) {
@@ -362,7 +370,8 @@ function createBlock(
       (width / 2 - 0.55),
       totalHeight / 2,
       z -
-      depth / 2 - 0.15
+      depth / 2 -
+      0.15
     );
 
     column.castShadow = true;
@@ -371,8 +380,6 @@ function createBlock(
 
   }
 
-  /* WINDOWS */
-
   createWindows(
     x,
     z,
@@ -380,8 +387,6 @@ function createBlock(
     depth,
     floors
   );
-
-  /* ROOF */
 
   const roof =
     new THREE.Mesh(
@@ -402,8 +407,6 @@ function createBlock(
   roof.castShadow = true;
 
   scene.add(roof);
-
-  /* NAME BOARD */
 
   const board =
     createTextBoard(name);
@@ -494,8 +497,6 @@ function createWindows(
 
       scene.add(window);
 
-      /* vertical frame */
-
       const frame =
         new THREE.Mesh(
           new THREE.BoxGeometry(
@@ -528,8 +529,6 @@ function createWindows(
 
 function createMainCollege() {
 
-  /* Main central block */
-
   createBlock(
     0,
     -75,
@@ -538,8 +537,6 @@ function createMainCollege() {
     4,
     "ABSS INSTITUTE OF TECHNOLOGY"
   );
-
-  /* FRONT PORTICO */
 
   const white =
     mat(0xf0eee8);
@@ -592,8 +589,6 @@ function createMainCollege() {
   portico.castShadow = true;
 
   scene.add(portico);
-
-  /* GLASS FRONT */
 
   const glass =
     new THREE.Mesh(
@@ -701,8 +696,6 @@ function createMainGate() {
   const whiteMat =
     mat(0xe8e5df);
 
-  /* gate pillars */
-
   for (
     const x of [-12, 12]
   ) {
@@ -747,8 +740,6 @@ function createMainGate() {
 
   }
 
-  /* gate */
-
   const gate =
     new THREE.Mesh(
       new THREE.BoxGeometry(
@@ -792,25 +783,18 @@ function createMainGate() {
    TEXT BOARD
    ========================================================= */
 
-function createTextBoard(
-  text
-) {
+function createTextBoard(text) {
 
   const canvas =
-    document.createElement(
-      "canvas"
-    );
+    document.createElement("canvas");
 
   canvas.width = 768;
   canvas.height = 128;
 
   const ctx =
-    canvas.getContext(
-      "2d"
-    );
+    canvas.getContext("2d");
 
-  ctx.fillStyle =
-    "#f3f0e9";
+  ctx.fillStyle = "#f3f0e9";
 
   ctx.fillRect(
     0,
@@ -819,17 +803,13 @@ function createTextBoard(
     canvas.height
   );
 
-  ctx.fillStyle =
-    "#8e2929";
+  ctx.fillStyle = "#8e2929";
 
   ctx.font =
     "bold 42px Arial";
 
-  ctx.textAlign =
-    "center";
-
-  ctx.textBaseline =
-    "middle";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
 
   ctx.fillText(
     text,
@@ -838,9 +818,7 @@ function createTextBoard(
   );
 
   const texture =
-    new THREE.CanvasTexture(
-      canvas
-    );
+    new THREE.CanvasTexture(canvas);
 
   texture.anisotropy =
     renderer.capabilities
@@ -864,8 +842,6 @@ function createTextBoard(
 
 function createGardens() {
 
-  /* central lawn */
-
   const lawn =
     new THREE.Mesh(
       new THREE.BoxGeometry(
@@ -884,23 +860,14 @@ function createGardens() {
 
   scene.add(lawn);
 
-  /* hedges */
-
   for (
     let x = -35;
     x <= 35;
     x += 5
   ) {
 
-    createBush(
-      x,
-      -29
-    );
-
-    createBush(
-      x,
-      0
-    );
+    createBush(x, -29);
+    createBush(x, 0);
 
   }
 
@@ -910,10 +877,7 @@ function createGardens() {
    BUSH
    ========================================================= */
 
-function createBush(
-  x,
-  z
-) {
+function createBush(x, z) {
 
   const bush =
     new THREE.Mesh(
@@ -1053,8 +1017,6 @@ function createParking() {
 
   scene.add(parking);
 
-  /* parking lines */
-
   for (
     let x = -95;
     x <= -55;
@@ -1136,6 +1098,10 @@ function createPlayer() {
   player =
     new THREE.Group();
 
+  player.name = "ABSS_Player";
+
+  /* SHIRT */
+
   const shirt =
     new THREE.Mesh(
       new THREE.BoxGeometry(
@@ -1146,12 +1112,13 @@ function createPlayer() {
       mat(0xf3f3f3)
     );
 
-  shirt.position.y =
-    1.7;
+  shirt.position.y = 1.7;
 
   shirt.castShadow = true;
 
   player.add(shirt);
+
+  /* BODY */
 
   const body =
     new THREE.Mesh(
@@ -1164,12 +1131,13 @@ function createPlayer() {
       mat(0xeeeeee)
     );
 
-  body.position.y =
-    1.5;
+  body.position.y = 1.5;
 
   body.castShadow = true;
 
   player.add(body);
+
+  /* HEAD */
 
   const head =
     new THREE.Mesh(
@@ -1181,17 +1149,18 @@ function createPlayer() {
       mat(0xd89b72)
     );
 
-  head.position.y =
-    2.65;
+  head.position.y = 2.65;
 
   head.castShadow = true;
 
   player.add(head);
 
+  /* LEGS */
+
   const legMat =
     mat(0x20252b);
 
-  const leg1 =
+  leg1 =
     new THREE.Mesh(
       new THREE.BoxGeometry(
         0.35,
@@ -1201,7 +1170,7 @@ function createPlayer() {
       legMat
     );
 
-  const leg2 =
+  leg2 =
     leg1.clone();
 
   leg1.position.set(
@@ -1215,6 +1184,9 @@ function createPlayer() {
     0.55,
     0
   );
+
+  leg1.castShadow = true;
+  leg2.castShadow = true;
 
   player.add(
     leg1,
@@ -1271,9 +1243,7 @@ function setupKeyboard() {
       )
         running = true;
 
-      if (
-        e.code === "Space"
-      )
+      if (e.code === "Space")
         jump();
 
     }
@@ -1325,22 +1295,15 @@ function setupKeyboard() {
 function setupJoystick() {
 
   const base =
-    document.getElementById(
-      "joystick"
-    );
+    document.getElementById("joystick");
 
   const stick =
-    document.getElementById(
-      "stick"
-    );
+    document.getElementById("stick");
 
   if (!base || !stick)
     return;
 
-  function move(
-    x,
-    y
-  ) {
+  function move(x, y) {
 
     const r =
       base.getBoundingClientRect();
@@ -1351,11 +1314,8 @@ function setupJoystick() {
     const cy =
       r.top + r.height / 2;
 
-    let dx =
-      x - cx;
-
-    let dy =
-      y - cy;
+    let dx = x - cx;
+    let dy = y - cy;
 
     const max =
       r.width / 2 - 24;
@@ -1390,6 +1350,7 @@ function setupJoystick() {
   function reset() {
 
     joystick.active = false;
+
     joystick.x = 0;
     joystick.y = 0;
 
@@ -1450,14 +1411,10 @@ function setupJoystick() {
 function setupButtons() {
 
   const jumpBtn =
-    document.getElementById(
-      "jumpBtn"
-    );
+    document.getElementById("jumpBtn");
 
   const runBtn =
-    document.getElementById(
-      "runBtn"
-    );
+    document.getElementById("runBtn");
 
   if (jumpBtn) {
 
@@ -1518,7 +1475,7 @@ function jump() {
 }
 
 /* =========================================================
-   PLAYER UPDATE
+   PLAYER + LEG ANIMATION
    ========================================================= */
 
 function updatePlayer(delta) {
@@ -1567,11 +1524,86 @@ function updatePlayer(delta) {
   const speed =
     running ? 13 : 6.5;
 
+  /* MOVEMENT */
+
   player.position.x +=
     x * speed * delta;
 
   player.position.z +=
     z * speed * delta;
+
+  /* =====================================================
+     WALK / RUN ANIMATION
+     ===================================================== */
+
+  const moving =
+    Math.abs(x) > 0.08 ||
+    Math.abs(z) > 0.08;
+
+  if (moving && onGround) {
+
+    const animationSpeed =
+      running ? 15 : 9;
+
+    const swingAmount =
+      running ? 0.65 : 0.42;
+
+    walkCycle +=
+      delta * animationSpeed;
+
+    const swing =
+      Math.sin(walkCycle) *
+      swingAmount;
+
+    /* Alternate legs */
+
+    leg1.rotation.x =
+      swing;
+
+    leg2.rotation.x =
+      -swing;
+
+    /* Small natural side movement */
+
+    leg1.rotation.z =
+      Math.sin(walkCycle * 0.5) * 0.04;
+
+    leg2.rotation.z =
+      -Math.sin(walkCycle * 0.5) * 0.04;
+
+  } else {
+
+    /* Return to idle */
+
+    leg1.rotation.x =
+      THREE.MathUtils.lerp(
+        leg1.rotation.x,
+        0,
+        Math.min(1, delta * 10)
+      );
+
+    leg2.rotation.x =
+      THREE.MathUtils.lerp(
+        leg2.rotation.x,
+        0,
+        Math.min(1, delta * 10)
+      );
+
+    leg1.rotation.z =
+      THREE.MathUtils.lerp(
+        leg1.rotation.z,
+        0,
+        Math.min(1, delta * 10)
+      );
+
+    leg2.rotation.z =
+      THREE.MathUtils.lerp(
+        leg2.rotation.z,
+        0,
+        Math.min(1, delta * 10)
+      );
+
+  }
 
   /* WORLD LIMIT */
 
@@ -1597,10 +1629,7 @@ function updatePlayer(delta) {
   ) {
 
     const angle =
-      Math.atan2(
-        x,
-        z
-      );
+      Math.atan2(x, z);
 
     player.rotation.y =
       THREE.MathUtils.lerp(
@@ -1670,18 +1699,14 @@ function updateCamera(delta) {
 function hideLoading() {
 
   const loading =
-    document.getElementById(
-      "loading"
-    );
+    document.getElementById("loading");
 
   if (!loading)
     return;
 
   setTimeout(() => {
 
-    loading.classList.add(
-      "hide"
-    );
+    loading.classList.add("hide");
 
     setTimeout(() => {
 
