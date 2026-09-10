@@ -2,26 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ABSS Map</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
   <div id="hud">
-    <div class="title">ABSS MAP</div>
-    <div id="place">Main Campus</div>
+    <b>ABSS MAP</b>
+    <span id="place">Main Campus</span>
   </div>
 
-  <div id="lookText">
-    Drag screen to look
-  </div>
-
-  <div id="crosshair">+</div>
+  <div id="look">DRAG TO LOOK</div>
 
   <div id="joystick">
     <div id="stick"></div>
@@ -30,8 +22,6 @@
   <button id="jump">JUMP</button>
   <button id="run">RUN</button>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
-  <script src="game.js"></script>
-
+  <script type="module" src="game.js"></script>
 </body>
 </html>
