@@ -1,24 +1,52 @@
-// ============================================
-// ABSS MAP - GAME.JS
-// ============================================
-
-// Three.js directly from CDN
-import * as THREE from
-    "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+/* =========================================
+   ABSS MAP
+   GAME ENGINE
+   ========================================= */
 
 
-// --------------------------------------------
-// GET GAME CONTAINER
-// --------------------------------------------
-
-const game = document.getElementById("game");
-const loading = document.getElementById("loading");
-const errorBox = document.getElementById("error");
+"use strict";
 
 
-// --------------------------------------------
-// ERROR HANDLER
-// --------------------------------------------
+// =========================================
+// CHECK THREE.JS
+// =========================================
+
+if (typeof THREE === "undefined") {
+
+    document.getElementById("loading").style.display =
+        "none";
+
+    const errorBox =
+        document.getElementById("error");
+
+    errorBox.style.display = "block";
+
+    errorBox.textContent =
+        "Three.js load bhayena. Internet connection check gara.";
+
+    throw new Error(
+        "Three.js was not loaded."
+    );
+}
+
+
+// =========================================
+// ELEMENTS
+// =========================================
+
+const game =
+    document.getElementById("game");
+
+const loading =
+    document.getElementById("loading");
+
+const errorBox =
+    document.getElementById("error");
+
+
+// =========================================
+// ERROR FUNCTION
+// =========================================
 
 function showError(message) {
 
@@ -33,19 +61,20 @@ function showError(message) {
 }
 
 
-// --------------------------------------------
+// =========================================
 // SCENE
-// --------------------------------------------
+// =========================================
 
-const scene = new THREE.Scene();
+const scene =
+    new THREE.Scene();
 
 scene.background =
     new THREE.Color(0x87ceeb);
 
 
-// --------------------------------------------
+// =========================================
 // CAMERA
-// --------------------------------------------
+// =========================================
 
 const camera =
     new THREE.PerspectiveCamera(
@@ -63,9 +92,9 @@ camera.position.set(
 );
 
 
-// --------------------------------------------
+// =========================================
 // RENDERER
-// --------------------------------------------
+// =========================================
 
 const renderer =
     new THREE.WebGLRenderer({
@@ -86,35 +115,44 @@ renderer.setSize(
 
 renderer.shadowMap.enabled = true;
 
+renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
 game.appendChild(
     renderer.domElement
 );
 
 
-// --------------------------------------------
-// SUN LIGHT
-// --------------------------------------------
+// =========================================
+// SUN
+// =========================================
 
-const sunlight =
+const sun =
     new THREE.DirectionalLight(
         0xffffff,
         2
     );
 
-sunlight.position.set(
+sun.position.set(
     50,
     100,
     50
 );
 
-sunlight.castShadow = true;
+sun.castShadow = true;
 
-scene.add(sunlight);
+sun.shadow.mapSize.width =
+    2048;
+
+sun.shadow.mapSize.height =
+    2048;
+
+scene.add(sun);
 
 
-// --------------------------------------------
+// =========================================
 // AMBIENT LIGHT
-// --------------------------------------------
+// =========================================
 
 const ambient =
     new THREE.AmbientLight(
@@ -125,9 +163,9 @@ const ambient =
 scene.add(ambient);
 
 
-// --------------------------------------------
-// TEMPORARY GROUND
-// --------------------------------------------
+// =========================================
+// GROUND
+// =========================================
 
 const groundGeometry =
     new THREE.PlaneGeometry(
@@ -154,9 +192,9 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 
-// --------------------------------------------
+// =========================================
 // TEMPORARY BUILDING
-// --------------------------------------------
+// =========================================
 
 const buildingGeometry =
     new THREE.BoxGeometry(
@@ -189,9 +227,9 @@ building.receiveShadow = true;
 scene.add(building);
 
 
-// --------------------------------------------
-// PLAYER
-// --------------------------------------------
+// =========================================
+// TEMPORARY PLAYER
+// =========================================
 
 const playerGeometry =
     new THREE.CapsuleGeometry(
@@ -223,15 +261,15 @@ player.castShadow = true;
 scene.add(player);
 
 
-// --------------------------------------------
+// =========================================
 // KEYBOARD
-// --------------------------------------------
+// =========================================
 
 const keys = {};
 
 window.addEventListener(
     "keydown",
-    (event) => {
+    function (event) {
 
         keys[
             event.key.toLowerCase()
@@ -243,7 +281,7 @@ window.addEventListener(
 
 window.addEventListener(
     "keyup",
-    (event) => {
+    function (event) {
 
         keys[
             event.key.toLowerCase()
@@ -253,9 +291,9 @@ window.addEventListener(
 );
 
 
-// --------------------------------------------
+// =========================================
 // PLAYER MOVEMENT
-// --------------------------------------------
+// =========================================
 
 function updatePlayer() {
 
@@ -302,7 +340,7 @@ function updatePlayer() {
     }
 
 
-    // Camera follow
+    // Camera follows player
 
     camera.position.x =
         player.position.x;
@@ -319,13 +357,13 @@ function updatePlayer() {
 }
 
 
-// --------------------------------------------
+// =========================================
 // RESIZE
-// --------------------------------------------
+// =========================================
 
 window.addEventListener(
     "resize",
-    () => {
+    function () {
 
         camera.aspect =
             window.innerWidth /
@@ -342,9 +380,9 @@ window.addEventListener(
 );
 
 
-// --------------------------------------------
+// =========================================
 // GAME LOOP
-// --------------------------------------------
+// =========================================
 
 function animate() {
 
@@ -361,19 +399,21 @@ function animate() {
 }
 
 
-// --------------------------------------------
-// START GAME
-// --------------------------------------------
+// =========================================
+// START
+// =========================================
 
 try {
 
     animate();
 
+    // Game successfully started
+
     loading.style.display =
         "none";
 
     console.log(
-        "ABSS Map started successfully!"
+        "ABSS Map started successfully."
     );
 
 } catch (error) {
