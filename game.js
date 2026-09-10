@@ -1,42 +1,82 @@
 // ============================================
-// ABSS MAP - GAME ENGINE
+// ABSS MAP - GAME.JS
 // ============================================
 
-import * as THREE from "three";
+// Three.js directly from CDN
+import * as THREE from
+    "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
 
 // --------------------------------------------
-// BASIC GAME SETUP
+// GET GAME CONTAINER
 // --------------------------------------------
 
 const game = document.getElementById("game");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("error");
+
+
+// --------------------------------------------
+// ERROR HANDLER
+// --------------------------------------------
+
+function showError(message) {
+
+    loading.style.display = "none";
+
+    errorBox.style.display = "block";
+
+    errorBox.textContent =
+        "Game Error: " + message;
+
+    console.error(message);
+}
+
+
+// --------------------------------------------
+// SCENE
+// --------------------------------------------
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x87ceeb);
+scene.background =
+    new THREE.Color(0x87ceeb);
+
 
 // --------------------------------------------
 // CAMERA
 // --------------------------------------------
 
-const camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    2000
+const camera =
+    new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth /
+        window.innerHeight,
+        0.1,
+        2000
+    );
+
+camera.position.set(
+    0,
+    6,
+    12
 );
 
-camera.position.set(0, 5, 12);
 
 // --------------------------------------------
 // RENDERER
 // --------------------------------------------
 
-const renderer = new THREE.WebGLRenderer({
-    antialias: true
-});
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias: true
+    });
 
 renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 2)
+    Math.min(
+        window.devicePixelRatio,
+        2
+    )
 );
 
 renderer.setSize(
@@ -46,37 +86,54 @@ renderer.setSize(
 
 renderer.shadowMap.enabled = true;
 
-game.appendChild(renderer.domElement);
-
-// --------------------------------------------
-// LIGHTING
-// --------------------------------------------
-
-const sunlight = new THREE.DirectionalLight(
-    0xffffff,
-    2
+game.appendChild(
+    renderer.domElement
 );
 
-sunlight.position.set(50, 100, 50);
+
+// --------------------------------------------
+// SUN LIGHT
+// --------------------------------------------
+
+const sunlight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        2
+    );
+
+sunlight.position.set(
+    50,
+    100,
+    50
+);
 
 sunlight.castShadow = true;
 
 scene.add(sunlight);
 
 
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    1
-);
+// --------------------------------------------
+// AMBIENT LIGHT
+// --------------------------------------------
 
-scene.add(ambientLight);
+const ambient =
+    new THREE.AmbientLight(
+        0xffffff,
+        1
+    );
+
+scene.add(ambient);
+
 
 // --------------------------------------------
 // TEMPORARY GROUND
 // --------------------------------------------
 
 const groundGeometry =
-    new THREE.PlaneGeometry(200, 200);
+    new THREE.PlaneGeometry(
+        200,
+        200
+    );
 
 const groundMaterial =
     new THREE.MeshStandardMaterial({
@@ -89,18 +146,24 @@ const ground =
         groundMaterial
     );
 
-ground.rotation.x = -Math.PI / 2;
+ground.rotation.x =
+    -Math.PI / 2;
 
 ground.receiveShadow = true;
 
 scene.add(ground);
 
+
 // --------------------------------------------
-// TEMPORARY ABSS BUILDING
+// TEMPORARY BUILDING
 // --------------------------------------------
 
 const buildingGeometry =
-    new THREE.BoxGeometry(25, 12, 18);
+    new THREE.BoxGeometry(
+        25,
+        12,
+        18
+    );
 
 const buildingMaterial =
     new THREE.MeshStandardMaterial({
@@ -120,12 +183,14 @@ building.position.set(
 );
 
 building.castShadow = true;
+
 building.receiveShadow = true;
 
 scene.add(building);
 
+
 // --------------------------------------------
-// SIMPLE PLAYER
+// PLAYER
 // --------------------------------------------
 
 const playerGeometry =
@@ -138,7 +203,7 @@ const playerGeometry =
 
 const playerMaterial =
     new THREE.MeshStandardMaterial({
-        color: 0xeeeeee
+        color: 0xffffff
     });
 
 const player =
@@ -157,8 +222,9 @@ player.castShadow = true;
 
 scene.add(player);
 
+
 // --------------------------------------------
-// KEYBOARD MOVEMENT
+// KEYBOARD
 // --------------------------------------------
 
 const keys = {};
@@ -166,47 +232,84 @@ const keys = {};
 window.addEventListener(
     "keydown",
     (event) => {
-        keys[event.key.toLowerCase()] = true;
+
+        keys[
+            event.key.toLowerCase()
+        ] = true;
+
     }
 );
+
 
 window.addEventListener(
     "keyup",
     (event) => {
-        keys[event.key.toLowerCase()] = false;
+
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+
     }
 );
+
 
 // --------------------------------------------
 // PLAYER MOVEMENT
 // --------------------------------------------
 
-const walkSpeed = 0.08;
-
 function updatePlayer() {
 
-    if (keys["w"] || keys["arrowup"]) {
-        player.position.z -= walkSpeed;
+    const speed = 0.08;
+
+
+    if (
+        keys["w"] ||
+        keys["arrowup"]
+    ) {
+
+        player.position.z -= speed;
+
     }
 
-    if (keys["s"] || keys["arrowdown"]) {
-        player.position.z += walkSpeed;
+
+    if (
+        keys["s"] ||
+        keys["arrowdown"]
+    ) {
+
+        player.position.z += speed;
+
     }
 
-    if (keys["a"] || keys["arrowleft"]) {
-        player.position.x -= walkSpeed;
+
+    if (
+        keys["a"] ||
+        keys["arrowleft"]
+    ) {
+
+        player.position.x -= speed;
+
     }
 
-    if (keys["d"] || keys["arrowright"]) {
-        player.position.x += walkSpeed;
+
+    if (
+        keys["d"] ||
+        keys["arrowright"]
+    ) {
+
+        player.position.x += speed;
+
     }
 
-    // Camera follows player
+
+    // Camera follow
+
     camera.position.x =
         player.position.x;
 
     camera.position.z =
         player.position.z + 12;
+
 
     camera.lookAt(
         player.position.x,
@@ -214,6 +317,7 @@ function updatePlayer() {
         player.position.z
     );
 }
+
 
 // --------------------------------------------
 // RESIZE
@@ -233,8 +337,10 @@ window.addEventListener(
             window.innerWidth,
             window.innerHeight
         );
+
     }
 );
+
 
 // --------------------------------------------
 // GAME LOOP
@@ -242,7 +348,9 @@ window.addEventListener(
 
 function animate() {
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(
+        animate
+    );
 
     updatePlayer();
 
@@ -252,6 +360,26 @@ function animate() {
     );
 }
 
-animate();
 
-console.log("ABSS Map Game Engine Started");
+// --------------------------------------------
+// START GAME
+// --------------------------------------------
+
+try {
+
+    animate();
+
+    loading.style.display =
+        "none";
+
+    console.log(
+        "ABSS Map started successfully!"
+    );
+
+} catch (error) {
+
+    showError(
+        error.message
+    );
+
+}
