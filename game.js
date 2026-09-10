@@ -1,17 +1,45 @@
 import * as THREE from
   "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
+
 /* =========================================================
-   ABSS MAP — EXTERIOR + PLAYER WALK ANIMATION
+   ABSS MAP
+   Fresh campus base
+   Free camera look
+   Main College
+   CSA Boys Hostel
+   Girls Hostel
+   Main Gate
    ========================================================= */
 
-let scene, camera, renderer, player;
+
+let scene;
+let camera;
+let renderer;
+let player;
+
+let leftLeg;
+let rightLeg;
+
 let velocityY = 0;
 let onGround = true;
-let running = false;
 
-let leg1, leg2;
+let running = false;
 let walkCycle = 0;
+
+let cameraYaw = 0;
+let cameraPitch = -0.12;
+
+let lookActive = false;
+let lastLookX = 0;
+let lastLookY = 0;
+
+let gateLeft;
+let gateRight;
+let gateOpen = false;
+
+const clock =
+  new THREE.Clock();
 
 const keys = {
   forward: false,
@@ -26,118 +54,17 @@ const joystick = {
   active: false
 };
 
-const clock = new THREE.Clock();
+const tmp =
+  new THREE.Vector3();
 
-/* ---------- START ---------- */
+
+/* =========================================================
+   START
+   ========================================================= */
 
 init();
 animate();
 
-/* =========================================================
-   INIT
-   ========================================================= */
-
-function init() {
-
-  scene = new THREE.Scene();
-
-  scene.background = new THREE.Color(0x8dbbd2);
-  scene.fog = new THREE.Fog(
-    0x8dbbd2,
-    160,
-    480
-  );
-
-  camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    700
-  );
-
-  camera.position.set(0, 7, 18);
-
-  renderer = new THREE.WebGLRenderer({
-    antialias: false,
-    powerPreference: "high-performance"
-  });
-
-  renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 1.5)
-  );
-
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
-
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type =
-    THREE.PCFSoftShadowMap;
-
-  document.body.appendChild(
-    renderer.domElement
-  );
-
-  /* LIGHT */
-
-  scene.add(
-    new THREE.HemisphereLight(
-      0xeaf7ff,
-      0x45633d,
-      2.2
-    )
-  );
-
-  const sun =
-    new THREE.DirectionalLight(
-      0xffffff,
-      2.3
-    );
-
-  sun.position.set(
-    100,
-    150,
-    80
-  );
-
-  sun.castShadow = true;
-
-  sun.shadow.mapSize.width = 1024;
-  sun.shadow.mapSize.height = 1024;
-
-  sun.shadow.camera.left = -180;
-  sun.shadow.camera.right = 180;
-  sun.shadow.camera.top = 180;
-  sun.shadow.camera.bottom = -180;
-
-  scene.add(sun);
-
-  /* WORLD */
-
-  createGround();
-  createCampusRoads();
-  createMainGate();
-  createMainCollege();
-  createSideBlocks();
-  createHostels();
-  createGardens();
-  createParking();
-  createSportsGround();
-  createCampusTrees();
-  createPlayer();
-
-  setupKeyboard();
-  setupJoystick();
-  setupButtons();
-
-  window.addEventListener(
-    "resize",
-    resize
-  );
-
-  hideLoading();
-}
 
 /* =========================================================
    MATERIAL
@@ -145,16 +72,179 @@ function init() {
 
 function mat(
   color,
-  roughness = 0.8
+  roughness = 0.82,
+  metalness = 0
 ) {
 
   return new THREE.MeshStandardMaterial({
     color,
     roughness,
-    metalness: 0
+    metalness
   });
 
 }
+
+
+/* =========================================================
+   INIT
+   ========================================================= */
+
+function init() {
+
+  scene =
+    new THREE.Scene();
+
+  scene.background =
+    new THREE.Color(0x83b9d8);
+
+  scene.fog =
+    new THREE.Fog(
+      0x83b9d8,
+      150,
+      500
+    );
+
+
+  camera =
+    new THREE.PerspectiveCamera(
+      62,
+      innerWidth / innerHeight,
+      0.1,
+      700
+    );
+
+  camera.position.set(
+    0,
+    5,
+    14
+  );
+
+
+  renderer =
+    new THREE.WebGLRenderer({
+      antialias: false,
+      powerPreference:
+        "high-performance"
+    });
+
+  renderer.setPixelRatio(
+    Math.min(
+      devicePixelRatio,
+      1.5
+    )
+  );
+
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
+
+
+  renderer.shadowMap.enabled = true;
+
+  renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+
+  document.body.appendChild(
+    renderer.domElement
+  );
+
+
+  /* LIGHT */
+
+  scene.add(
+    new THREE.HemisphereLight(
+      0xeaf7ff,
+      0x3f5d35,
+      2.0
+    )
+  );
+
+
+  const sun =
+    new THREE.DirectionalLight(
+      0xfff2d8,
+      2.5
+    );
+
+  sun.position.set(
+    120,
+    160,
+    80
+  );
+
+  sun.castShadow = true;
+
+  sun.shadow.mapSize.set(
+    1024,
+    1024
+  );
+
+  sun.shadow.camera.left = -190;
+  sun.shadow.camera.right = 190;
+
+  sun.shadow.camera.top = 190;
+  sun.shadow.camera.bottom = -190;
+
+  scene.add(sun);
+
+
+  /* WORLD */
+
+  createGround();
+
+  createRoads();
+
+  createMainGate();
+
+  createAcademicBlocks();
+
+  createHostels();
+
+  createGardens();
+
+  createSports();
+
+  createParking();
+
+  createTrees();
+
+  createPlayer();
+
+
+  /* CONTROLS */
+
+  setupKeyboard();
+
+  setupJoystick();
+
+  setupLook();
+
+  setupButtons();
+
+  addWorldBoundary();
+
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
+
+  setTimeout(
+    () => {
+
+      document
+        .getElementById("loading")
+        ?.classList.add("hide");
+
+    },
+    450
+  );
+
+}
+
 
 /* =========================================================
    GROUND
@@ -168,7 +258,7 @@ function createGround() {
         500,
         500
       ),
-      mat(0x4d7d43)
+      mat(0x4f8147)
     );
 
   ground.rotation.x =
@@ -178,144 +268,250 @@ function createGround() {
 
   scene.add(ground);
 
+
+  for (
+    let i = 0;
+    i < 45;
+    i++
+  ) {
+
+    const patch =
+      new THREE.Mesh(
+        new THREE.CircleGeometry(
+          2.5 + (i % 4),
+          8
+        ),
+        mat(
+          i % 2
+            ? 0x5b8d4e
+            : 0x47783f
+        )
+      );
+
+    const x =
+      ((i * 47) % 280) - 140;
+
+    const z =
+      ((i * 83) % 260) - 130;
+
+    patch.rotation.x =
+      -Math.PI / 2;
+
+    patch.position.set(
+      x,
+      0.015,
+      z
+    );
+
+    scene.add(patch);
+
+  }
+
 }
+
 
 /* =========================================================
-   ROADS
+   ROAD
    ========================================================= */
 
-function makeRoad(
+function road(
   x,
   z,
-  width,
-  depth
+  w,
+  d,
+  color = 0x55585b
 ) {
 
-  const road =
+  const m =
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        width,
-        0.12,
-        depth
-      ),
-      mat(0x55585a)
-    );
-
-  road.position.set(
-    x,
-    0.06,
-    z
-  );
-
-  road.receiveShadow = true;
-
-  scene.add(road);
-
-}
-
-function makePath(
-  x,
-  z,
-  width,
-  depth
-) {
-
-  const path =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width,
+        w,
         0.10,
-        depth
+        d
       ),
-      mat(0xb8b1a1)
+      mat(color)
     );
 
-  path.position.set(
+  m.position.set(
     x,
     0.05,
     z
   );
 
-  scene.add(path);
+  m.receiveShadow = true;
+
+  scene.add(m);
+
+  return m;
 
 }
 
-function createCampusRoads() {
 
-  makeRoad(
+/* =========================================================
+   ROADS
+   ========================================================= */
+
+function createRoads() {
+
+  road(
     0,
-    30,
+    25,
     18,
     290
   );
 
-  makeRoad(
+  road(
     0,
     -50,
     300,
     18
   );
 
-  makeRoad(
+  road(
     0,
-    105,
+    108,
     300,
     16
   );
 
-  makeRoad(
-    -105,
+  road(
+    -108,
     20,
     14,
     250
   );
 
-  makeRoad(
-    105,
+  road(
+    108,
     20,
     14,
     250
   );
 
-  makePath(
+  road(
     0,
-    -15,
+    -12,
     8,
-    55
+    55,
+    0xb8b2a6
+  );
+
+  road(
+    0,
+    55,
+    8,
+    55,
+    0xb8b2a6
   );
 
 }
+
+
+/* =========================================================
+   SIGN BOARD
+   ========================================================= */
+
+function board(
+  text,
+  width = 8
+) {
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width = 900;
+  canvas.height = 140;
+
+
+  const ctx =
+    canvas.getContext("2d");
+
+
+  ctx.fillStyle =
+    "#f0eee8";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  ctx.fillStyle =
+    "#8e2e2e";
+
+  ctx.font =
+    "bold 48px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
+
+
+  ctx.fillText(
+    text,
+    canvas.width / 2,
+    canvas.height / 2
+  );
+
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas
+    );
+
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+
+
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(
+      width,
+      width * 0.155
+    ),
+    new THREE.MeshBasicMaterial({
+      map: texture
+    })
+  );
+
+}
+
 
 /* =========================================================
    BUILDING
    ========================================================= */
 
-function createBlock(
+function createBuilding(
   x,
   z,
-  width,
-  depth,
+  w,
+  d,
   floors,
   name
 ) {
 
-  const floorHeight = 4.2;
-  const totalHeight =
-    floors * floorHeight;
+  const h =
+    floors * 4.1;
+
 
   const body =
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        width,
-        totalHeight,
-        depth
+        w,
+        h,
+        d
       ),
       mat(0xa94739)
     );
 
   body.position.set(
     x,
-    totalHeight / 2,
+    h / 2,
     z
   );
 
@@ -323,6 +519,9 @@ function createBlock(
   body.receiveShadow = true;
 
   scene.add(body);
+
+
+  /* FLOOR BANDS */
 
   for (
     let f = 1;
@@ -333,16 +532,16 @@ function createBlock(
     const band =
       new THREE.Mesh(
         new THREE.BoxGeometry(
-          width + 0.12,
-          0.18,
-          depth + 0.12
+          w + 0.18,
+          0.20,
+          d + 0.18
         ),
         mat(0xf0eee8)
       );
 
     band.position.set(
       x,
-      f * floorHeight,
+      f * 4.1,
       z
     );
 
@@ -350,57 +549,22 @@ function createBlock(
 
   }
 
-  for (
-    const side of [-1, 1]
-  ) {
 
-    const column =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          1.0,
-          totalHeight + 0.2,
-          1.0
-        ),
-        mat(0xf0eee8)
-      );
-
-    column.position.set(
-      x +
-      side *
-      (width / 2 - 0.55),
-      totalHeight / 2,
-      z -
-      depth / 2 -
-      0.15
-    );
-
-    column.castShadow = true;
-
-    scene.add(column);
-
-  }
-
-  createWindows(
-    x,
-    z,
-    width,
-    depth,
-    floors
-  );
+  /* ROOF */
 
   const roof =
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        width + 0.8,
+        w + 1,
         0.35,
-        depth + 0.8
+        d + 1
       ),
-      mat(0x8f2929)
+      mat(0x7f2a2a)
     );
 
   roof.position.set(
     x,
-    totalHeight + 0.2,
+    h + 0.18,
     z
   );
 
@@ -408,58 +572,76 @@ function createBlock(
 
   scene.add(roof);
 
-  const board =
-    createTextBoard(name);
 
-  board.position.set(
+  windows(
     x,
-    totalHeight - 1.1,
-    z -
-    depth / 2 -
-    0.12
+    z,
+    w,
+    d,
+    floors
   );
 
-  scene.add(board);
+
+  const b =
+    board(
+      name,
+      Math.min(
+        10,
+        w * 0.2
+      )
+    );
+
+  b.position.set(
+    x,
+    h - 1.1,
+    z - d / 2 - 0.08
+  );
+
+  scene.add(b);
 
 }
+
 
 /* =========================================================
    WINDOWS
    ========================================================= */
 
-function createWindows(
+function windows(
   x,
   z,
-  width,
-  depth,
+  w,
+  d,
   floors
 ) {
 
-  const glassMat =
-    new THREE.MeshStandardMaterial({
-      color: 0x6faebe,
-      roughness: 0.18,
-      metalness: 0.08
-    });
+  const glass =
+    mat(
+      0x79b4c6,
+      0.18,
+      0.08
+    );
 
-  const frameMat =
+  const frame =
     mat(0xf0eee8);
+
 
   const count =
     Math.max(
       4,
-      Math.floor(width / 4)
+      Math.floor(w / 4.2)
     );
 
+
   for (
-    let floor = 0;
-    floor < floors;
-    floor++
+    let f = 0;
+    f < floors;
+    f++
   ) {
 
     const y =
       1.65 +
-      floor * 4.2;
+      f * 4.1;
+
 
     for (
       let i = 0;
@@ -469,53 +651,54 @@ function createWindows(
 
       const px =
         x -
-        width / 2 +
-        2.3 +
+        w / 2 +
+        2.2 +
         i *
         (
-          (width - 4.6) /
-          Math.max(1, count - 1)
+          (w - 4.4) /
+          Math.max(
+            1,
+            count - 1
+          )
         );
 
-      const window =
+
+      const win =
         new THREE.Mesh(
           new THREE.BoxGeometry(
+            1.45,
             1.55,
-            1.65,
             0.08
           ),
-          glassMat
+          glass
         );
 
-      window.position.set(
+      win.position.set(
         px,
         y,
-        z -
-        depth / 2 -
-        0.08
+        z - d / 2 - 0.07
       );
 
-      scene.add(window);
+      scene.add(win);
 
-      const frame =
+
+      const v =
         new THREE.Mesh(
           new THREE.BoxGeometry(
-            0.08,
-            1.8,
+            0.07,
+            1.72,
             0.12
           ),
-          frameMat
+          frame
         );
 
-      frame.position.set(
+      v.position.set(
         px,
         y,
-        z -
-        depth / 2 -
-        0.13
+        z - d / 2 - 0.12
       );
 
-      scene.add(frame);
+      scene.add(v);
 
     }
 
@@ -523,13 +706,14 @@ function createWindows(
 
 }
 
+
 /* =========================================================
-   MAIN COLLEGE
+   ACADEMIC BLOCKS
    ========================================================= */
 
-function createMainCollege() {
+function createAcademicBlocks() {
 
-  createBlock(
+  createBuilding(
     0,
     -75,
     58,
@@ -538,17 +722,43 @@ function createMainCollege() {
     "ABSS INSTITUTE OF TECHNOLOGY"
   );
 
+
+  createBuilding(
+    -62,
+    -58,
+    42,
+    27,
+    4,
+    "MAHATMA GANDHI BLOCK"
+  );
+
+
+  createBuilding(
+    62,
+    -58,
+    42,
+    27,
+    4,
+    "VISHVESVARAYA BLOCK"
+  );
+
+
   const white =
     mat(0xf0eee8);
 
-  const red =
-    mat(0x9d2d2d);
+  const glass =
+    mat(
+      0x83c0d3,
+      0.15,
+      0.05
+    );
+
 
   for (
     const x of [-20, 20]
   ) {
 
-    const pillar =
+    const p =
       new THREE.Mesh(
         new THREE.BoxGeometry(
           2.4,
@@ -558,187 +768,204 @@ function createMainCollege() {
         white
       );
 
-    pillar.position.set(
+    p.position.set(
       x,
       4.5,
       -91
     );
 
-    pillar.castShadow = true;
+    p.castShadow = true;
 
-    scene.add(pillar);
+    scene.add(p);
 
   }
 
-  const portico =
+
+  const roof =
     new THREE.Mesh(
       new THREE.BoxGeometry(
         48,
-        1.3,
+        1.2,
         8
       ),
-      red
+      mat(0x922e2e)
     );
 
-  portico.position.set(
+  roof.position.set(
     0,
     9,
     -91
   );
 
-  portico.castShadow = true;
+  roof.castShadow = true;
 
-  scene.add(portico);
+  scene.add(roof);
 
-  const glass =
+
+  const front =
     new THREE.Mesh(
       new THREE.BoxGeometry(
         17,
         6,
-        0.3
+        0.22
       ),
-      new THREE.MeshStandardMaterial({
-        color: 0x91c9d8,
-        transparent: true,
-        opacity: 0.58,
-        roughness: 0.15
-      })
+      glass
     );
 
-  glass.position.set(
+  front.position.set(
     0,
     3.2,
-    -90.4
+    -90.35
   );
 
-  scene.add(glass);
+  scene.add(front);
+
 
   const sign =
-    createTextBoard("ABSS");
-
-  sign.scale.set(
-    0.9,
-    0.9,
-    0.9
-  );
+    board(
+      "ABSS",
+      6
+    );
 
   sign.position.set(
     0,
-    5.3,
-    -90.7
+    5.4,
+    -90.5
   );
 
   scene.add(sign);
 
 }
 
+
 /* =========================================================
-   SIDE BLOCKS
+   HOSTEL
    ========================================================= */
 
-function createSideBlocks() {
+function createHostel(
+  x,
+  z,
+  name
+) {
 
-  createBlock(
-    -62,
-    -58,
-    42,
+  createBuilding(
+    x,
+    z,
+    40,
     27,
     4,
-    "MAHATMA GANDHI BLOCK"
+    name
   );
 
-  createBlock(
-    62,
-    -58,
-    42,
-    27,
-    4,
-    "VISHVESVARAYA BLOCK"
+
+  const entrance =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        7,
+        3.2,
+        0.6
+      ),
+      mat(0x6e3329)
+    );
+
+  entrance.position.set(
+    x,
+    1.6,
+    z - 13.7
   );
+
+  entrance.castShadow = true;
+
+  scene.add(entrance);
+
+
+  const canopy =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        10,
+        0.55,
+        4
+      ),
+      mat(0xe7e2d8)
+    );
+
+  canopy.position.set(
+    x,
+    4,
+    z - 15
+  );
+
+  scene.add(canopy);
 
 }
 
-/* =========================================================
-   HOSTELS
-   ========================================================= */
 
 function createHostels() {
 
-  createBlock(
+  createHostel(
     -78,
     65,
-    40,
-    27,
-    4,
     "CSA BOYS HOSTEL"
   );
 
-  createBlock(
+  createHostel(
     78,
     65,
-    40,
-    27,
-    4,
     "GIRLS HOSTEL"
   );
 
 }
 
+
 /* =========================================================
    MAIN GATE
    ========================================================= */
+
 function createMainGate() {
 
-  /* =========================
-     MAIN GATE MATERIALS
-     ========================= */
-
-  const brickMat =
+  const brick =
     mat(0x8f4030);
 
-  const brickDarkMat =
-    mat(0x673024);
+  const dark =
+    mat(0x603025);
 
-  const whiteMat =
+  const white =
     mat(0xf0eee8);
 
-  const gateMat =
-    mat(0x4b3025);
+  const metal =
+    mat(
+      0x5b514c,
+      0.35,
+      0.7
+    );
 
-  const metalMat =
-    new THREE.MeshStandardMaterial({
-      color: 0x777777,
-      metalness: 0.7,
-      roughness: 0.35
-    });
 
-  /* =========================
-     LEFT & RIGHT PILLARS
-     ========================= */
+  /* PILLARS */
 
-  for (const x of [-13, 13]) {
+  for (
+    const x of [-13, 13]
+  ) {
 
-    const pillar =
+    const p =
       new THREE.Mesh(
         new THREE.BoxGeometry(
           4,
           8,
           4
         ),
-        brickMat
+        brick
       );
 
-    pillar.position.set(
+    p.position.set(
       x,
       4,
       108
     );
 
-    pillar.castShadow = true;
+    p.castShadow = true;
 
-    scene.add(pillar);
+    scene.add(p);
 
-    /* WHITE CAP */
 
     const cap =
       new THREE.Mesh(
@@ -747,7 +974,7 @@ function createMainGate() {
           0.45,
           4.5
         ),
-        whiteMat
+        white
       );
 
     cap.position.set(
@@ -756,11 +983,8 @@ function createMainGate() {
       108
     );
 
-    cap.castShadow = true;
-
     scene.add(cap);
 
-    /* DARK BASE */
 
     const base =
       new THREE.Mesh(
@@ -769,7 +993,7 @@ function createMainGate() {
           0.7,
           4.3
         ),
-        brickDarkMat
+        dark
       );
 
     base.position.set(
@@ -780,196 +1004,8 @@ function createMainGate() {
 
     scene.add(base);
 
-  }
 
-  /* =========================
-     TOP GATE BEAM
-     ========================= */
-
-  const topBeam =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        25,
-        1.2,
-        1.3
-      ),
-      brickMat
-    );
-
-  topBeam.position.set(
-    0,
-    7.3,
-    108
-  );
-
-  topBeam.castShadow = true;
-
-  scene.add(topBeam);
-
-  /* =========================
-     ABSS SIGN
-     ========================= */
-
-  const sign =
-    createTextBoard(
-      "ABSS INSTITUTE OF TECHNOLOGY"
-    );
-
-  sign.scale.set(
-    1.35,
-    1.35,
-    1.35
-  );
-
-  sign.position.set(
-    0,
-    6.15,
-    107.25
-  );
-
-  scene.add(sign);
-
-  /* =========================
-     LEFT SLIDING GATE
-     ========================= */
-
-  const leftGate =
-    new THREE.Group();
-
-  const leftPanel =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        11,
-        4.8,
-        0.35
-      ),
-      gateMat
-    );
-
-  leftPanel.position.x =
-    -5.5;
-
-  leftGate.add(leftPanel);
-
-  /* METAL BARS */
-
-  for (
-    let x = -10;
-    x <= -1;
-    x += 1.5
-  ) {
-
-    const bar =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.18,
-          4.8,
-          0.45
-        ),
-        metalMat
-      );
-
-    bar.position.set(
-      x,
-      0,
-      0
-    );
-
-    leftGate.add(bar);
-
-  }
-
-  leftGate.position.set(
-    0,
-    2.4,
-    106.8
-  );
-
-  scene.add(leftGate);
-
-  /* =========================
-     RIGHT SLIDING GATE
-     ========================= */
-
-  const rightGate =
-    new THREE.Group();
-
-  const rightPanel =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        11,
-        4.8,
-        0.35
-      ),
-      gateMat
-    );
-
-  rightPanel.position.x =
-    5.5;
-
-  rightGate.add(rightPanel);
-
-  for (
-    let x = 1;
-    x <= 10;
-    x += 1.5
-  ) {
-
-    const bar =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.18,
-          4.8,
-          0.45
-        ),
-        metalMat
-      );
-
-    bar.position.set(
-      x,
-      0,
-      0
-    );
-
-    rightGate.add(bar);
-
-  }
-
-  rightGate.position.set(
-    0,
-    2.4,
-    106.8
-  );
-
-  scene.add(rightGate);
-
-  /* =========================
-     GATE ROAD
-     ========================= */
-
-  const entrance =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        26,
-        0.08,
-        18
-      ),
-      mat(0x626364)
-    );
-
-  entrance.position.set(
-    0,
-    0.04,
-    118
-  );
-
-  scene.add(entrance);
-
-  /* =========================
-     GATE LIGHTS
-     ========================= */
-
-  for (const x of [-13, 13]) {
+    /* LIGHT */
 
     const lamp =
       new THREE.Mesh(
@@ -981,13 +1017,13 @@ function createMainGate() {
         new THREE.MeshStandardMaterial({
           color: 0xffd66b,
           emissive: 0xffa000,
-          emissiveIntensity: 1.5
+          emissiveIntensity: 1.4
         })
       );
 
     lamp.position.set(
       x,
-      8.7,
+      8.75,
       108
     );
 
@@ -995,83 +1031,159 @@ function createMainGate() {
 
   }
 
-  /* =========================
-     SMALL GARDEN BESIDE GATE
-     ========================= */
 
-  createBush(-18, 103);
-  createBush(18, 103);
+  /* TOP */
 
-  createTree(
-    -20,
-    104,
-    0.9
+  const top =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        25,
+        1.2,
+        1.3
+      ),
+      brick
+    );
+
+  top.position.set(
+    0,
+    7.3,
+    108
   );
 
-  createTree(
-    20,
-    104,
-    0.9
+  top.castShadow = true;
+
+  scene.add(top);
+
+
+  /* SIGN */
+
+  const s =
+    board(
+      "ABSS INSTITUTE OF TECHNOLOGY",
+      11
+    );
+
+  s.position.set(
+    0,
+    6.05,
+    107.25
+  );
+
+  scene.add(s);
+
+
+  /* GATE PANELS */
+
+  gateLeft =
+    new THREE.Group();
+
+  gateRight =
+    new THREE.Group();
+
+
+  buildGatePanel(
+    gateLeft,
+    -1
+  );
+
+  buildGatePanel(
+    gateRight,
+    1
+  );
+
+
+  gateLeft.position.set(
+    0,
+    2.4,
+    106.7
+  );
+
+  gateRight.position.set(
+    0,
+    2.4,
+    106.7
+  );
+
+
+  scene.add(
+    gateLeft,
+    gateRight
+  );
+
+
+  /* ENTRANCE ROAD */
+
+  road(
+    0,
+    118,
+    28,
+    18,
+    0x646567
   );
 
 }
+
 
 /* =========================================================
-   TEXT BOARD
+   GATE PANEL
    ========================================================= */
 
-function createTextBoard(text) {
+function buildGatePanel(
+  group,
+  side
+) {
 
-  const canvas =
-    document.createElement("canvas");
+  const panel =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        11,
+        4.8,
+        0.35
+      ),
+      mat(0x4c3228)
+    );
 
-  canvas.width = 768;
-  canvas.height = 128;
+  panel.position.x =
+    side * 5.5;
 
-  const ctx =
-    canvas.getContext("2d");
+  panel.castShadow = true;
 
-  ctx.fillStyle = "#f3f0e9";
+  group.add(panel);
 
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
 
-  ctx.fillStyle = "#8e2929";
+  for (
+    let i = 0;
+    i < 7;
+    i++
+  ) {
 
-  ctx.font =
-    "bold 42px Arial";
+    const bar =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.18,
+          4.8,
+          0.45
+        ),
+        mat(
+          0x6e6862,
+          0.3,
+          0.7
+        )
+      );
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+    bar.position.set(
+      side *
+      (i * 1.55 + 1),
+      0,
+      0
+    );
 
-  ctx.fillText(
-    text,
-    canvas.width / 2,
-    canvas.height / 2
-  );
+    group.add(bar);
 
-  const texture =
-    new THREE.CanvasTexture(canvas);
-
-  texture.anisotropy =
-    renderer.capabilities
-      .getMaxAnisotropy();
-
-  return new THREE.Mesh(
-    new THREE.PlaneGeometry(
-      7,
-      1.17
-    ),
-    new THREE.MeshBasicMaterial({
-      map: texture
-    })
-  );
+  }
 
 }
+
 
 /* =========================================================
    GARDENS
@@ -1082,61 +1194,277 @@ function createGardens() {
   const lawn =
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        75,
+        78,
         0.08,
-        30
+        32
       ),
-      mat(0x568849)
+      mat(0x58894a)
     );
 
   lawn.position.set(
     0,
     0.04,
-    -15
+    -12
   );
 
   scene.add(lawn);
 
+
   for (
-    let x = -35;
-    x <= 35;
-    x += 5
+    let x = -36;
+    x <= 36;
+    x += 6
   ) {
 
-    createBush(x, -29);
-    createBush(x, 0);
+    bush(
+      x,
+      -29
+    );
+
+    bush(
+      x,
+      4
+    );
+
+  }
+
+
+  for (
+    let x = -25;
+    x <= 25;
+    x += 10
+  ) {
+
+    flower(
+      x,
+      -15
+    );
 
   }
 
 }
 
-/* =========================================================
-   BUSH
-   ========================================================= */
 
-function createBush(x, z) {
+function bush(
+  x,
+  z
+) {
 
-  const bush =
+  const b =
     new THREE.Mesh(
       new THREE.SphereGeometry(
-        1.2,
+        1.25,
         8,
         6
       ),
-      mat(0x2f6e35)
+      mat(0x2f6d36)
     );
 
-  bush.position.set(
+  b.position.set(
     x,
     0.9,
     z
   );
 
-  bush.scale.y = 0.7;
+  b.scale.y =
+    0.7;
 
-  scene.add(bush);
+  b.castShadow = true;
+
+  scene.add(b);
 
 }
+
+
+function flower(
+  x,
+  z
+) {
+
+  const stem =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.04,
+        0.04,
+        0.45,
+        5
+      ),
+      mat(0x2d6a35)
+    );
+
+  stem.position.set(
+    x,
+    0.22,
+    z
+  );
+
+  scene.add(stem);
+
+
+  const f =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.16,
+        6,
+        5
+      ),
+      mat(0xe6c85a)
+    );
+
+  f.position.set(
+    x,
+    0.48,
+    z
+  );
+
+  scene.add(f);
+
+}
+
+
+/* =========================================================
+   SPORTS
+   ========================================================= */
+
+function createSports() {
+
+  const field =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        58,
+        0.08,
+        36
+      ),
+      mat(0x3f7841)
+    );
+
+  field.position.set(
+    70,
+    0.04,
+    105
+  );
+
+  scene.add(field);
+
+
+  const court =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        32,
+        0.10,
+        20
+      ),
+      mat(0x3d789e)
+    );
+
+  court.position.set(
+    70,
+    0.09,
+    105
+  );
+
+  scene.add(court);
+
+
+  const line =
+    mat(0xf3f0e8);
+
+
+  for (
+    const x of [54, 86]
+  ) {
+
+    const l =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.16,
+          0.03,
+          20
+        ),
+        line
+      );
+
+    l.position.set(
+      x,
+      0.16,
+      105
+    );
+
+    scene.add(l);
+
+  }
+
+
+  for (
+    const z of [95, 115]
+  ) {
+
+    const l =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          32,
+          0.03,
+          0.16
+        ),
+        line
+      );
+
+    l.position.set(
+      70,
+      0.16,
+      z
+    );
+
+    scene.add(l);
+
+  }
+
+}
+
+
+/* =========================================================
+   PARKING
+   ========================================================= */
+
+function createParking() {
+
+  road(
+    -75,
+    20,
+    46,
+    26,
+    0x686a6b
+  );
+
+
+  for (
+    let x = -95;
+    x <= -55;
+    x += 5
+  ) {
+
+    const l =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.12,
+          0.03,
+          20
+        ),
+        mat(0xe7e7e7)
+      );
+
+    l.position.set(
+      x,
+      0.1,
+      20
+    );
+
+    scene.add(l);
+
+  }
+
+}
+
 
 /* =========================================================
    TREES
@@ -1145,23 +1473,23 @@ function createBush(x, z) {
 function createTree(
   x,
   z,
-  scale = 1
+  s = 1
 ) {
 
   const trunk =
     new THREE.Mesh(
       new THREE.CylinderGeometry(
-        0.35 * scale,
-        0.48 * scale,
-        3.2 * scale,
+        0.32 * s,
+        0.46 * s,
+        3 * s,
         8
       ),
-      mat(0x68432d)
+      mat(0x68442e)
     );
 
   trunk.position.set(
     x,
-    1.6 * scale,
+    1.5 * s,
     z
   );
 
@@ -1169,19 +1497,20 @@ function createTree(
 
   scene.add(trunk);
 
+
   const crown =
     new THREE.Mesh(
       new THREE.SphereGeometry(
-        2.1 * scale,
+        2 * s,
         10,
         8
       ),
-      mat(0x286532)
+      mat(0x2d6834)
     );
 
   crown.position.set(
     x,
-    4.0 * scale,
+    3.65 * s,
     z
   );
 
@@ -1191,7 +1520,8 @@ function createTree(
 
 }
 
-function createCampusTrees() {
+
+function createTrees() {
 
   const positions = [
 
@@ -1212,119 +1542,30 @@ function createCampusTrees() {
     [115, 95],
 
     [-48, 110],
-    [48, 110]
+    [48, 110],
+
+    [-35, 35],
+    [35, 35]
 
   ];
 
-  for (
-    const p of positions
-  ) {
 
-    createTree(
-      p[0],
-      p[1],
-      1.25
-    );
+  positions.forEach(
+    (v, i) => {
 
-  }
-
-}
-
-/* =========================================================
-   PARKING
-   ========================================================= */
-
-function createParking() {
-
-  const parking =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        45,
-        0.08,
-        25
-      ),
-      mat(0x6b6c6d)
-    );
-
-  parking.position.set(
-    -75,
-    0.04,
-    20
-  );
-
-  scene.add(parking);
-
-  for (
-    let x = -95;
-    x <= -55;
-    x += 5
-  ) {
-
-    const line =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.12,
-          0.03,
-          20
-        ),
-        mat(0xe5e5e5)
+      createTree(
+        v[0],
+        v[1],
+        i % 3 === 0
+          ? 1.3
+          : 1
       );
 
-    line.position.set(
-      x,
-      0.1,
-      20
-    );
-
-    scene.add(line);
-
-  }
+    }
+  );
 
 }
 
-/* =========================================================
-   SPORTS
-   ========================================================= */
-
-function createSportsGround() {
-
-  const field =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        55,
-        0.08,
-        34
-      ),
-      mat(0x3f7540)
-    );
-
-  field.position.set(
-    70,
-    0.04,
-    105
-  );
-
-  scene.add(field);
-
-  const court =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        30,
-        0.10,
-        18
-      ),
-      mat(0x3476a0)
-    );
-
-  court.position.set(
-    70,
-    0.09,
-    105
-  );
-
-  scene.add(court);
-
-}
 
 /* =========================================================
    PLAYER
@@ -1335,7 +1576,6 @@ function createPlayer() {
   player =
     new THREE.Group();
 
-  player.name = "ABSS_Player";
 
   /* SHIRT */
 
@@ -1349,11 +1589,13 @@ function createPlayer() {
       mat(0xf3f3f3)
     );
 
-  shirt.position.y = 1.7;
+  shirt.position.y =
+    1.7;
 
   shirt.castShadow = true;
 
   player.add(shirt);
+
 
   /* BODY */
 
@@ -1368,11 +1610,13 @@ function createPlayer() {
       mat(0xeeeeee)
     );
 
-  body.position.y = 1.5;
+  body.position.y =
+    1.5;
 
   body.castShadow = true;
 
   player.add(body);
+
 
   /* HEAD */
 
@@ -1380,24 +1624,27 @@ function createPlayer() {
     new THREE.Mesh(
       new THREE.SphereGeometry(
         0.43,
-        12,
+        14,
         10
       ),
       mat(0xd89b72)
     );
 
-  head.position.y = 2.65;
+  head.position.y =
+    2.65;
 
   head.castShadow = true;
 
   player.add(head);
+
 
   /* LEGS */
 
   const legMat =
     mat(0x20252b);
 
-  leg1 =
+
+  leftLeg =
     new THREE.Mesh(
       new THREE.BoxGeometry(
         0.35,
@@ -1407,38 +1654,45 @@ function createPlayer() {
       legMat
     );
 
-  leg2 =
-    leg1.clone();
 
-  leg1.position.set(
+  rightLeg =
+    leftLeg.clone();
+
+
+  leftLeg.position.set(
     -0.22,
     0.55,
     0
   );
 
-  leg2.position.set(
+  rightLeg.position.set(
     0.22,
     0.55,
     0
   );
 
-  leg1.castShadow = true;
-  leg2.castShadow = true;
+
+  leftLeg.castShadow = true;
+  rightLeg.castShadow = true;
+
 
   player.add(
-    leg1,
-    leg2
+    leftLeg,
+    rightLeg
   );
+
 
   player.position.set(
     0,
     0,
-    90
+    92
   );
+
 
   scene.add(player);
 
 }
+
 
 /* =========================================================
    KEYBOARD
@@ -1446,77 +1700,89 @@ function createPlayer() {
 
 function setupKeyboard() {
 
-  window.addEventListener(
+  addEventListener(
     "keydown",
     e => {
 
       if (
-        e.code === "KeyW" ||
-        e.code === "ArrowUp"
+        ["KeyW", "ArrowUp"]
+          .includes(e.code)
       )
         keys.forward = true;
 
+
       if (
-        e.code === "KeyS" ||
-        e.code === "ArrowDown"
+        ["KeyS", "ArrowDown"]
+          .includes(e.code)
       )
         keys.backward = true;
 
+
       if (
-        e.code === "KeyA" ||
-        e.code === "ArrowLeft"
+        ["KeyA", "ArrowLeft"]
+          .includes(e.code)
       )
         keys.left = true;
 
+
       if (
-        e.code === "KeyD" ||
-        e.code === "ArrowRight"
+        ["KeyD", "ArrowRight"]
+          .includes(e.code)
       )
         keys.right = true;
 
+
       if (
-        e.code === "ShiftLeft" ||
-        e.code === "ShiftRight"
+        ["ShiftLeft", "ShiftRight"]
+          .includes(e.code)
       )
         running = true;
 
-      if (e.code === "Space")
+
+      if (
+        e.code === "Space"
+      )
         jump();
 
     }
   );
 
-  window.addEventListener(
+
+  addEventListener(
     "keyup",
     e => {
 
       if (
-        e.code === "KeyW" ||
-        e.code === "ArrowUp"
+        ["KeyW", "ArrowUp"]
+          .includes(e.code)
       )
         keys.forward = false;
 
+
       if (
-        e.code === "KeyS" ||
-        e.code === "ArrowDown"
+        ["KeyS", "ArrowDown"]
+          .includes(e.code)
       )
         keys.backward = false;
 
+
       if (
-        e.code === "KeyA" ||
-        e.code === "ArrowLeft"
+        ["KeyA", "ArrowLeft"]
+          .includes(e.code)
       )
         keys.left = false;
 
+
       if (
-        e.code === "KeyD" ||
-        e.code === "ArrowRight"
+        ["KeyD", "ArrowRight"]
+          .includes(e.code)
       )
         keys.right = false;
 
+
       if (
-        e.code === "ShiftLeft" ||
-        e.code === "ShiftRight"
+        ["ShiftLeft", "ShiftRight"]
+          .includes(e.code)
       )
         running = false;
 
@@ -1525,6 +1791,7 @@ function setupKeyboard() {
 
 }
 
+
 /* =========================================================
    JOYSTICK
    ========================================================= */
@@ -1532,75 +1799,99 @@ function setupKeyboard() {
 function setupJoystick() {
 
   const base =
-    document.getElementById("joystick");
+    document.getElementById(
+      "joystick"
+    );
 
   const stick =
-    document.getElementById("stick");
+    document.getElementById(
+      "stick"
+    );
 
-  if (!base || !stick)
-    return;
 
-  function move(x, y) {
+  const move =
+    (
+      px,
+      py
+    ) => {
 
-    const r =
-      base.getBoundingClientRect();
+      const r =
+        base.getBoundingClientRect();
 
-    const cx =
-      r.left + r.width / 2;
 
-    const cy =
-      r.top + r.height / 2;
+      const cx =
+        r.left +
+        r.width / 2;
 
-    let dx = x - cx;
-    let dy = y - cy;
 
-    const max =
-      r.width / 2 - 24;
+      const cy =
+        r.top +
+        r.height / 2;
 
-    const d =
-      Math.sqrt(
-        dx * dx +
-        dy * dy
-      );
 
-    if (d > max) {
+      const max =
+        r.width / 2 - 14;
 
-      dx =
-        dx / d * max;
 
-      dy =
-        dy / d * max;
+      let dx =
+        px - cx;
 
-    }
+      let dy =
+        py - cy;
 
-    stick.style.transform =
-      `translate(${dx}px, ${dy}px)`;
 
-    joystick.x =
-      dx / max;
+      const d =
+        Math.hypot(
+          dx,
+          dy
+        );
 
-    joystick.y =
-      dy / max;
 
-  }
+      if (d > max) {
 
-  function reset() {
+        dx =
+          dx / d * max;
 
-    joystick.active = false;
+        dy =
+          dy / d * max;
 
-    joystick.x = 0;
-    joystick.y = 0;
+      }
 
-    stick.style.transform =
-      "translate(0px,0px)";
 
-  }
+      stick.style.transform =
+        `translate(${dx}px,${dy}px)`;
+
+
+      joystick.x =
+        dx / max;
+
+      joystick.y =
+        dy / max;
+
+    };
+
+
+  const reset =
+    () => {
+
+      joystick.active =
+        false;
+
+      joystick.x = 0;
+      joystick.y = 0;
+
+      stick.style.transform =
+        "translate(0,0)";
+
+    };
+
 
   base.addEventListener(
     "pointerdown",
     e => {
 
-      joystick.active = true;
+      joystick.active =
+        true;
 
       base.setPointerCapture(
         e.pointerId
@@ -1614,20 +1905,22 @@ function setupJoystick() {
     }
   );
 
+
   base.addEventListener(
     "pointermove",
     e => {
 
-      if (!joystick.active)
-        return;
-
-      move(
-        e.clientX,
-        e.clientY
-      );
+      if (
+        joystick.active
+      )
+        move(
+          e.clientX,
+          e.clientY
+        );
 
     }
   );
+
 
   base.addEventListener(
     "pointerup",
@@ -1641,6 +1934,105 @@ function setupJoystick() {
 
 }
 
+
+/* =========================================================
+   FREE LOOK
+   ========================================================= */
+
+function setupLook() {
+
+  const area =
+    document.getElementById(
+      "lookArea"
+    );
+
+
+  area.addEventListener(
+    "pointerdown",
+    e => {
+
+      lookActive = true;
+
+      lastLookX =
+        e.clientX;
+
+      lastLookY =
+        e.clientY;
+
+
+      area.setPointerCapture(
+        e.pointerId
+      );
+
+    }
+  );
+
+
+  area.addEventListener(
+    "pointermove",
+    e => {
+
+      if (!lookActive)
+        return;
+
+
+      const dx =
+        e.clientX -
+        lastLookX;
+
+
+      const dy =
+        e.clientY -
+        lastLookY;
+
+
+      lastLookX =
+        e.clientX;
+
+      lastLookY =
+        e.clientY;
+
+
+      cameraYaw -=
+        dx * 0.006;
+
+
+      cameraPitch -=
+        dy * 0.004;
+
+
+      cameraPitch =
+        THREE.MathUtils.clamp(
+          cameraPitch,
+          -1.05,
+          0.8
+        );
+
+    }
+  );
+
+
+  const stop =
+    () => {
+
+      lookActive = false;
+
+    };
+
+
+  area.addEventListener(
+    "pointerup",
+    stop
+  );
+
+  area.addEventListener(
+    "pointercancel",
+    stop
+  );
+
+}
+
+
 /* =========================================================
    BUTTONS
    ========================================================= */
@@ -1648,54 +2040,72 @@ function setupJoystick() {
 function setupButtons() {
 
   const jumpBtn =
-    document.getElementById("jumpBtn");
-
-  const runBtn =
-    document.getElementById("runBtn");
-
-  if (jumpBtn) {
-
-    jumpBtn.addEventListener(
-      "pointerdown",
-      e => {
-
-        e.preventDefault();
-        jump();
-
-      }
+    document.getElementById(
+      "jumpBtn"
     );
 
-  }
 
-  if (runBtn) {
+  jumpBtn.addEventListener(
+    "pointerdown",
+    e => {
 
-    runBtn.addEventListener(
-      "pointerdown",
-      e => {
+      e.preventDefault();
 
-        e.preventDefault();
-        running = true;
+      jump();
 
-      }
+    }
+  );
+
+
+  const run =
+    document.getElementById(
+      "runBtn"
     );
 
-    runBtn.addEventListener(
-      "pointerup",
-      () => {
-        running = false;
-      }
-    );
 
-    runBtn.addEventListener(
-      "pointercancel",
-      () => {
-        running = false;
-      }
-    );
+  run.addEventListener(
+    "pointerdown",
+    e => {
 
-  }
+      e.preventDefault();
+
+      running = true;
+
+    }
+  );
+
+
+  run.addEventListener(
+    "pointerup",
+    () => {
+
+      running = false;
+
+    }
+  );
+
+
+  run.addEventListener(
+    "pointercancel",
+    () => {
+
+      running = false;
+
+    }
+  );
+
+
+  run.addEventListener(
+    "pointerleave",
+    () => {
+
+      running = false;
+
+    }
+  );
 
 }
+
 
 /* =========================================================
    JUMP
@@ -1706,22 +2116,27 @@ function jump() {
   if (!onGround)
     return;
 
-  velocityY = 7.5;
-  onGround = false;
+
+  velocityY =
+    7.5;
+
+  onGround =
+    false;
 
 }
 
+
 /* =========================================================
-   PLAYER + LEG ANIMATION
+   PLAYER UPDATE
    ========================================================= */
 
-function updatePlayer(delta) {
-
-  if (!player)
-    return;
+function updatePlayer(
+  dt
+) {
 
   let x = 0;
   let z = 0;
+
 
   if (keys.left)
     x -= 1;
@@ -1735,112 +2150,55 @@ function updatePlayer(delta) {
   if (keys.backward)
     z += 1;
 
+
   if (
     Math.abs(joystick.x) > 0.08 ||
     Math.abs(joystick.y) > 0.08
   ) {
 
-    x = joystick.x;
-    z = joystick.y;
+    x =
+      joystick.x;
+
+    z =
+      joystick.y;
 
   }
 
-  const length =
-    Math.sqrt(
-      x * x +
-      z * z
+
+  const len =
+    Math.hypot(
+      x,
+      z
     );
 
-  if (length > 1) {
 
-    x /= length;
-    z /= length;
+  if (len > 1) {
+
+    x /= len;
+    z /= len;
 
   }
 
-  const speed =
-    running ? 13 : 6.5;
-
-  /* MOVEMENT */
-
-  player.position.x +=
-    x * speed * delta;
-
-  player.position.z +=
-    z * speed * delta;
-
-  /* =====================================================
-     WALK / RUN ANIMATION
-     ===================================================== */
 
   const moving =
     Math.abs(x) > 0.08 ||
     Math.abs(z) > 0.08;
 
-  if (moving && onGround) {
 
-    const animationSpeed =
-      running ? 15 : 9;
+  const speed =
+    running
+      ? 13
+      : 6.5;
 
-    const swingAmount =
-      running ? 0.65 : 0.42;
 
-    walkCycle +=
-      delta * animationSpeed;
+  /* MOVEMENT */
 
-    const swing =
-      Math.sin(walkCycle) *
-      swingAmount;
+  player.position.x +=
+    x * speed * dt;
 
-    /* Alternate legs */
+  player.position.z +=
+    z * speed * dt;
 
-    leg1.rotation.x =
-      swing;
-
-    leg2.rotation.x =
-      -swing;
-
-    /* Small natural side movement */
-
-    leg1.rotation.z =
-      Math.sin(walkCycle * 0.5) * 0.04;
-
-    leg2.rotation.z =
-      -Math.sin(walkCycle * 0.5) * 0.04;
-
-  } else {
-
-    /* Return to idle */
-
-    leg1.rotation.x =
-      THREE.MathUtils.lerp(
-        leg1.rotation.x,
-        0,
-        Math.min(1, delta * 10)
-      );
-
-    leg2.rotation.x =
-      THREE.MathUtils.lerp(
-        leg2.rotation.x,
-        0,
-        Math.min(1, delta * 10)
-      );
-
-    leg1.rotation.z =
-      THREE.MathUtils.lerp(
-        leg1.rotation.z,
-        0,
-        Math.min(1, delta * 10)
-      );
-
-    leg2.rotation.z =
-      THREE.MathUtils.lerp(
-        leg2.rotation.z,
-        0,
-        Math.min(1, delta * 10)
-      );
-
-  }
 
   /* WORLD LIMIT */
 
@@ -1851,6 +2209,7 @@ function updatePlayer(delta) {
       145
     );
 
+
   player.position.z =
     THREE.MathUtils.clamp(
       player.position.z,
@@ -1858,103 +2217,305 @@ function updatePlayer(delta) {
       140
     );
 
+
   /* ROTATION */
 
-  if (
-    Math.abs(x) > 0.01 ||
-    Math.abs(z) > 0.01
-  ) {
+  if (moving) {
 
-    const angle =
-      Math.atan2(x, z);
+    const target =
+      Math.atan2(
+        x,
+        z
+      );
+
 
     player.rotation.y =
       THREE.MathUtils.lerp(
         player.rotation.y,
-        angle,
+        target,
         0.18
       );
 
   }
 
+
+  /* =====================================================
+     WALK / RUN LEG ANIMATION
+     ===================================================== */
+
+  if (
+    moving &&
+    onGround
+  ) {
+
+    walkCycle +=
+      dt *
+      (
+        running
+          ? 15
+          : 9
+      );
+
+
+    const swing =
+      Math.sin(
+        walkCycle
+      ) *
+      (
+        running
+          ? 0.65
+          : 0.42
+      );
+
+
+    leftLeg.rotation.x =
+      swing;
+
+    rightLeg.rotation.x =
+      -swing;
+
+
+    leftLeg.rotation.z =
+      Math.sin(
+        walkCycle * 0.5
+      ) * 0.04;
+
+
+    rightLeg.rotation.z =
+      -Math.sin(
+        walkCycle * 0.5
+      ) * 0.04;
+
+  }
+
+  else {
+
+    const k =
+      Math.min(
+        1,
+        dt * 10
+      );
+
+
+    leftLeg.rotation.x =
+      THREE.MathUtils.lerp(
+        leftLeg.rotation.x,
+        0,
+        k
+      );
+
+
+    rightLeg.rotation.x =
+      THREE.MathUtils.lerp(
+        rightLeg.rotation.x,
+        0,
+        k
+      );
+
+
+    leftLeg.rotation.z =
+      THREE.MathUtils.lerp(
+        leftLeg.rotation.z,
+        0,
+        k
+      );
+
+
+    rightLeg.rotation.z =
+      THREE.MathUtils.lerp(
+        rightLeg.rotation.z,
+        0,
+        k
+      );
+
+  }
+
+
   /* GRAVITY */
 
   velocityY -=
-    18 * delta;
+    18 * dt;
+
 
   player.position.y +=
-    velocityY * delta;
+    velocityY * dt;
+
 
   if (
     player.position.y <= 0
   ) {
 
     player.position.y = 0;
+
     velocityY = 0;
+
     onGround = true;
 
   }
 
+
+  updateGate();
+
 }
 
+
 /* =========================================================
-   CAMERA
+   GATE AUTO OPEN
    ========================================================= */
 
-function updateCamera(delta) {
+function updateGate() {
 
-  if (!player)
+  if (
+    !gateLeft ||
+    !gateRight
+  )
     return;
 
-  const desired =
-    new THREE.Vector3(
-      player.position.x,
-      player.position.y + 6.5,
-      player.position.z + 10
+
+  const near =
+    player.position.z > 96 &&
+    player.position.z < 122 &&
+    Math.abs(
+      player.position.x
+    ) < 22;
+
+
+  gateOpen =
+    near;
+
+
+  const target =
+    gateOpen
+      ? 9
+      : 0;
+
+
+  gateLeft.position.x =
+    THREE.MathUtils.lerp(
+      gateLeft.position.x,
+      -target,
+      0.09
     );
 
+
+  gateRight.position.x =
+    THREE.MathUtils.lerp(
+      gateRight.position.x,
+      target,
+      0.09
+    );
+
+}
+
+
+/* =========================================================
+   FREE CAMERA
+   ========================================================= */
+
+function updateCamera(
+  dt
+) {
+
+  const distance =
+    9;
+
+
+  const horizontal =
+    Math.cos(
+      cameraPitch
+    ) *
+    distance;
+
+
+  const targetX =
+    player.position.x +
+    Math.sin(
+      cameraYaw
+    ) *
+    horizontal;
+
+
+  const targetZ =
+    player.position.z +
+    Math.cos(
+      cameraYaw
+    ) *
+    horizontal;
+
+
+  const targetY =
+    player.position.y +
+    2.8 +
+    Math.sin(
+      cameraPitch
+    ) *
+    distance;
+
+
+  tmp.set(
+    targetX,
+    targetY,
+    targetZ
+  );
+
+
   camera.position.lerp(
-    desired,
+    tmp,
     Math.min(
       1,
-      delta * 6
+      dt * 7
     )
   );
 
+
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.7,
+    player.position.y + 1.55,
     player.position.z
   );
 
 }
 
+
 /* =========================================================
-   LOADING
+   WORLD BOUNDARY
    ========================================================= */
 
-function hideLoading() {
+function addWorldBoundary() {
 
-  const loading =
-    document.getElementById("loading");
+  const b =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        300,
+        0.4,
+        2
+      ),
+      mat(0x5a4638)
+    );
 
-  if (!loading)
-    return;
 
-  setTimeout(() => {
+  b.position.set(
+    0,
+    0.2,
+    -150
+  );
 
-    loading.classList.add("hide");
 
-    setTimeout(() => {
+  scene.add(b);
 
-      if (loading.parentNode)
-        loading.remove();
 
-    }, 400);
+  const b2 =
+    b.clone();
 
-  }, 400);
+
+  b2.position.z =
+    150;
+
+
+  scene.add(b2);
 
 }
+
 
 /* =========================================================
    RESIZE
@@ -1963,24 +2524,28 @@ function hideLoading() {
 function resize() {
 
   camera.aspect =
-    window.innerWidth /
-    window.innerHeight;
+    innerWidth /
+    innerHeight;
+
 
   camera.updateProjectionMatrix();
 
+
   renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
+    innerWidth,
+    innerHeight
   );
+
 
   renderer.setPixelRatio(
     Math.min(
-      window.devicePixelRatio,
+      devicePixelRatio,
       1.5
     )
   );
 
 }
+
 
 /* =========================================================
    GAME LOOP
@@ -1992,14 +2557,18 @@ function animate() {
     animate
   );
 
-  const delta =
+
+  const dt =
     Math.min(
       clock.getDelta(),
       0.05
     );
 
-  updatePlayer(delta);
-  updateCamera(delta);
+
+  updatePlayer(dt);
+
+  updateCamera(dt);
+
 
   renderer.render(
     scene,
