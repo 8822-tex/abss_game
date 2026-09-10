@@ -1,224 +1,127 @@
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
 
 html,
-body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #83b8d4;
-  font-family: Arial, sans-serif;
-  touch-action: none;
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#87ceeb;
+  font-family:Arial,sans-serif;
+  touch-action:none;
 }
 
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  touch-action: none;
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
 }
 
-button {
-  font: 700 10px Arial;
-  border: 0;
-  color: #fff;
-  background: rgba(20, 24, 25, 0.68);
-  -webkit-tap-highlight-color: transparent;
+#loading{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#101820;
+  color:#fff;
+  font-size:20px;
 }
 
-#hud {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
+#hud{
+  position:fixed;
+  z-index:5;
+  top:12px;
+  left:12px;
+  padding:9px 12px;
+  border-radius:12px;
+  background:rgba(0,0,0,.45);
+  color:#fff;
+  font-size:13px;
+  pointer-events:none;
 }
 
-.brand {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  color: #fff;
-  text-shadow: 0 2px 4px #000;
-
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+#hud span{
+  display:block;
+  margin-top:3px;
+  font-size:11px;
+  opacity:.85;
 }
 
-.brand b {
-  font-size: 15px;
-  letter-spacing: 1px;
+#lookHint{
+  position:fixed;
+  z-index:4;
+  right:15px;
+  top:12px;
+  padding:7px 10px;
+  border-radius:10px;
+  background:rgba(0,0,0,.28);
+  color:#fff;
+  font-size:11px;
+  pointer-events:none;
 }
 
-.brand small {
-  font-size: 9px;
-  opacity: 0.9;
+#crosshair{
+  position:fixed;
+  z-index:4;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  color:rgba(255,255,255,.75);
+  font-size:22px;
+  pointer-events:none;
 }
 
-#lookHint {
-  position: absolute;
-  top: 13px;
-  right: 12px;
-
-  padding: 7px 10px;
-
-  border-radius: 12px;
-
-  background: rgba(0, 0, 0, 0.3);
-
-  color: #fff;
-
-  font-size: 9px;
-
-  opacity: 0.75;
+#joystick{
+  position:fixed;
+  z-index:6;
+  left:22px;
+  bottom:24px;
+  width:128px;
+  height:128px;
+  border-radius:50%;
+  background:rgba(255,255,255,.16);
+  border:2px solid rgba(255,255,255,.28);
+  touch-action:none;
 }
 
-#joystick {
-  position: fixed;
-
-  left: 18px;
-  bottom: 24px;
-
-  width: 74px;
-  height: 74px;
-
-  border-radius: 50%;
-
-  background: rgba(20, 30, 25, 0.38);
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-
-  z-index: 10;
-
-  touch-action: none;
+#stick{
+  position:absolute;
+  left:39px;
+  top:39px;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  background:rgba(255,255,255,.55);
+  box-shadow:0 3px 12px rgba(0,0,0,.25);
 }
 
-#stick {
-  position: absolute;
-
-  left: 23px;
-  top: 23px;
-
-  width: 28px;
-  height: 28px;
-
-  border-radius: 50%;
-
-  background: rgba(245, 245, 245, 0.9);
-
-  box-shadow: 0 2px 6px #0006;
-
-  transform: translate(0, 0);
+button{
+  position:fixed;
+  z-index:7;
+  border:0;
+  color:#fff;
+  font-weight:700;
+  border-radius:50%;
+  width:68px;
+  height:68px;
+  background:rgba(20,20,20,.5);
+  touch-action:none;
 }
 
-.roundBtn {
-  position: fixed;
-
-  width: 46px;
-  height: 46px;
-
-  border-radius: 50%;
-
-  z-index: 10;
-
-  right: 17px;
-  bottom: 22px;
+#jump{
+  right:24px;
+  bottom:105px;
 }
 
-.roundBtn:active {
-  transform: scale(0.94);
-
-  background: rgba(150, 40, 35, 0.85);
-}
-
-#runBtn {
-  right: 66px;
-  bottom: 70px;
-
-  width: 34px;
-  height: 34px;
-
-  font-size: 8px;
-}
-
-#jumpBtn {
-  bottom: 70px;
-}
-
-#lookArea {
-  position: fixed;
-
-  left: 40%;
-  right: 0;
-
-  top: 55px;
-  bottom: 0;
-
-  z-index: 6;
-
-  touch-action: none;
-
-  background: transparent;
-}
-
-#loading {
-  position: fixed;
-
-  inset: 0;
-
-  background: #111820;
-
-  z-index: 100;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  flex-direction: column;
-
-  color: #fff;
-
-  gap: 8px;
-
-  transition: opacity 0.35s;
-}
-
-.loader {
-  width: 32px;
-  height: 32px;
-
-  border: 3px solid #ffffff30;
-
-  border-top-color: #fff;
-
-  border-radius: 50%;
-
-  animation: spin 0.8s linear infinite;
-}
-
-#loading.hide {
-  opacity: 0;
-  pointer-events: none;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (min-width: 800px) {
-
-  #joystick {
-    left: 30px;
-    bottom: 30px;
-  }
-
-  #lookHint {
-    font-size: 10px;
-  }
-
+#run{
+  right:102px;
+  bottom:28px;
+  width:62px;
+  height:62px;
+  font-size:11px;
 }
