@@ -1,40 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
 
-    <meta name="viewport"
-          content="width=device-width,
-          initial-scale=1.0,
-          maximum-scale=1.0,
-          user-scalable=no">
+  <title>ABSS Map</title>
 
-    <title>ABSS Map</title>
+  <link rel="stylesheet" href="./style.css" />
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 
 <body>
 
-    <!-- Game container -->
-    <div id="game"></div>
+  <div id="loading">
+    <div class="loading-title">ABSS MAP</div>
+    <div class="loading-subtitle">ABSS Institute of Technology • Meerut</div>
+    <div class="loading-bar">
+      <div id="loadingProgress"></div>
+    </div>
+  </div>
 
-    <!-- Loading screen -->
-    <div id="loading">
-        <h1>ABSS Map</h1>
-        <p>Loading game...</p>
+  <div id="hud">
+    <div class="map-title">ABSS MAP</div>
+    <div class="location">ABSS Institute of Technology</div>
+  </div>
+
+  <div id="controls">
+    <div id="joystick">
+      <div id="joystickKnob"></div>
     </div>
 
-    <!-- Error box -->
-    <div id="error"></div>
+    <button id="jumpButton">JUMP</button>
+    <button id="runButton">RUN</button>
+  </div>
 
-
-    <!-- THREE.JS -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
-
-    <!-- GAME JAVASCRIPT -->
-    <script src="./game.js"></script>
+  <script type="module" src="./game.js"></script>
 
 </body>
 </html>
