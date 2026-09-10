@@ -1,148 +1,157 @@
-/* =========================================
-   ABSS MAP
-   MAIN CSS
-   ========================================= */
-
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
 body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-
-    background: #000;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    user-select: none;
-    -webkit-user-select: none;
-
-    -webkit-tap-highlight-color: transparent;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #101010;
+  font-family: Arial, sans-serif;
+  touch-action: none;
 }
 
-body {
-    position: fixed;
-    inset: 0;
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
-
-
-/* =========================================
-   GAME
-   ========================================= */
-
-#game {
-    position: fixed;
-
-    left: 0;
-    top: 0;
-
-    width: 100%;
-    height: 100%;
-
-    overflow: hidden;
-}
-
-#game canvas {
-    display: block;
-
-    width: 100%;
-    height: 100%;
-
-    touch-action: none;
-}
-
-
-/* =========================================
-   LOADING SCREEN
-   ========================================= */
 
 #loading {
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 1000;
-
-    display: flex;
-
-    flex-direction: column;
-
-    justify-content: center;
-
-    align-items: center;
-
-    background: #111;
-
-    color: white;
-
-    text-align: center;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #101010;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease;
 }
 
-#loading h1 {
-    font-size: 30px;
-
-    margin-bottom: 12px;
-
-    font-weight: 700;
+.loading-title {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 4px;
 }
 
-#loading p {
-    font-size: 15px;
-
-    opacity: 0.75;
+.loading-subtitle {
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: 0.75;
 }
 
-
-/* =========================================
-   ERROR
-   ========================================= */
-
-#error {
-    display: none;
-
-    position: fixed;
-
-    left: 15px;
-    right: 15px;
-    bottom: 15px;
-
-    z-index: 2000;
-
-    padding: 15px;
-
-    border-radius: 10px;
-
-    background: #b00020;
-
-    color: white;
-
-    font-size: 14px;
-
-    line-height: 1.5;
-
-    word-break: break-word;
+.loading-bar {
+  width: 220px;
+  height: 5px;
+  margin-top: 25px;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
+#loadingProgress {
+  width: 0%;
+  height: 100%;
+  background: #ffffff;
+  transition: width 0.3s;
+}
 
-/* =========================================
-   MOBILE
-   ========================================= */
+#hud {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 10;
+  color: white;
+  pointer-events: none;
+  text-shadow: 0 2px 5px #000;
+}
 
-@media (max-width: 600px) {
+.map-title {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
 
-    #loading h1 {
-        font-size: 27px;
-    }
+.location {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.85;
+}
 
-    #loading p {
-        font-size: 14px;
-    }
+#controls {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+#joystick {
+  position: absolute;
+  left: 25px;
+  bottom: 28px;
+
+  width: 125px;
+  height: 125px;
+
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+
+  pointer-events: auto;
+}
+
+#joystickKnob {
+  position: absolute;
+
+  width: 52px;
+  height: 52px;
+
+  left: 50%;
+  top: 50%;
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+#jumpButton,
+#runButton {
+  position: absolute;
+  pointer-events: auto;
+
+  border: none;
+  border-radius: 50%;
+
+  color: white;
+  font-weight: bold;
+
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+
+  width: 65px;
+  height: 65px;
+}
+
+#jumpButton {
+  right: 30px;
+  bottom: 105px;
+}
+
+#runButton {
+  right: 105px;
+  bottom: 35px;
+  width: 58px;
+  height: 58px;
+  font-size: 10px;
+}
+
+button:active {
+  transform: scale(0.92);
 }
