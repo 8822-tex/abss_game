@@ -3,13 +3,12 @@
   -webkit-tap-highlight-color:transparent;
 }
 
-html,
-body{
+html,body{
+  margin:0;
   width:100%;
   height:100%;
-  margin:0;
   overflow:hidden;
-  background:#82c8ed;
+  background:#80c8e8;
   touch-action:none;
   font-family:Arial,sans-serif;
 }
@@ -25,81 +24,67 @@ canvas{
   top:12px;
   left:12px;
   z-index:10;
-  padding:9px 13px;
-  border-radius:12px;
-  background:rgba(0,0,0,.45);
   color:white;
+  background:rgba(20,30,35,.62);
+  padding:10px 14px;
+  border-radius:12px;
   pointer-events:none;
 }
 
-.title{
-  font-size:15px;
-  font-weight:bold;
+#hud b{
+  display:block;
+  font-size:16px;
 }
 
 #place{
+  display:block;
   margin-top:3px;
-  font-size:11px;
-  opacity:.9;
+  font-size:12px;
 }
 
-#lookText{
+#look{
   position:fixed;
   top:12px;
   right:12px;
   z-index:10;
-  padding:7px 10px;
+  color:white;
+  background:rgba(20,30,35,.48);
+  padding:9px 12px;
   border-radius:10px;
-  background:rgba(0,0,0,.35);
-  color:white;
   font-size:11px;
-  pointer-events:none;
-}
-
-#crosshair{
-  position:fixed;
-  left:50%;
-  top:50%;
-  z-index:8;
-  transform:translate(-50%,-50%);
-  color:white;
-  font-size:22px;
-  opacity:.7;
   pointer-events:none;
 }
 
 #joystick{
   position:fixed;
-  left:20px;
+  left:22px;
   bottom:22px;
-  width:130px;
-  height:130px;
+  width:135px;
+  height:135px;
   z-index:20;
-  border:2px solid rgba(255,255,255,.35);
   border-radius:50%;
-  background:rgba(0,0,0,.20);
+  background:rgba(30,80,110,.38);
+  border:2px solid rgba(255,255,255,.25);
   touch-action:none;
 }
 
 #stick{
   position:absolute;
-  left:39px;
-  top:39px;
-  width:50px;
-  height:50px;
+  left:40px;
+  top:40px;
+  width:51px;
+  height:51px;
   border-radius:50%;
-  background:rgba(255,255,255,.60);
+  background:rgba(255,255,255,.68);
 }
 
 button{
   position:fixed;
   z-index:20;
-  width:70px;
-  height:70px;
   border:0;
-  border-radius:50%;
   color:white;
-  background:rgba(0,0,0,.48);
+  background:rgba(25,75,105,.72);
+  border-radius:50%;
   font-weight:bold;
   touch-action:none;
 }
@@ -107,12 +92,13 @@ button{
 #jump{
   right:20px;
   bottom:105px;
+  width:72px;
+  height:72px;
 }
 
 #run{
   right:105px;
   bottom:25px;
-  width:62px;
-  height:62px;
-  font-size:11px;
+  width:65px;
+  height:65px;
 }
