@@ -1,379 +1,559 @@
-"use strict";
+/* =========================================================
+   ABSS INSTITUTE OF TECHNOLOGY - 3D CAMPUS GAME
+   Krishna's ABSS Project
+   game.js
+   ========================================================= */
 
-(function () {
+(() => {
+    "use strict";
+
+    /* =====================================================
+       1. BASIC SAFETY CHECK
+       ===================================================== */
+
     if (typeof THREE === "undefined") {
-        const loading = document.getElementById("loadingScreen");
-        const error = document.getElementById("error");
-
-        if (loading) loading.style.display = "none";
-
-        if (error) {
-            error.style.display = "flex";
-            error.innerHTML =
-                "<div><h2>Three.js could not load</h2>" +
-                "<p>Check your internet connection and reload the page.</p></div>";
-        }
-
+        document.body.innerHTML = `
+            <div style="
+                color:white;
+                background:#111;
+                min-height:100vh;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                text-align:center;
+                padding:30px;
+                font-family:Arial,sans-serif;
+            ">
+                <div>
+                    <h2>Three.js could not load</h2>
+                    <p>Please check your internet connection and reload the page.</p>
+                </div>
+            </div>
+        `;
         return;
     }
 
-    const canvas = document.getElementById("gameCanvas");
-    const loadingScreen = document.getElementById("loadingScreen");
-    const loadingProgress = document.getElementById("loadingProgress");
-
-    const accountScreen = document.getElementById("accountScreen");
-    const characterSetupScreen = document.getElementById("characterSetupScreen");
-    const loginScreen = document.getElementById("loginScreen");
-    const gameUI = document.getElementById("gameUI");
-
-    const gameMenu = document.getElementById("gameMenu");
-    const settingsScreen = document.getElementById("settingsScreen");
-    const mapScreen = document.getElementById("mapScreen");
-    const missionsScreen = document.getElementById("missionsScreen");
-
-    const playerNameInput = document.getElementById("playerName");
-    const playerPasswordInput = document.getElementById("playerPassword");
-    const loginPasswordInput = document.getElementById("loginPassword");
-
-    const savedPlayerName = document.getElementById("savedPlayerName");
-    const playerNameDisplay = document.getElementById("playerNameDisplay");
-    const loginError = document.getElementById("loginError");
-
-    const lookArea = document.getElementById("lookArea");
-    const joystickBase = document.getElementById("joystickBase");
-    const joystickStick = document.getElementById("joystickStick");
-
-    const jumpButton = document.getElementById("jumpButton");
-    const runButton = document.getElementById("runButton");
-    const interactButton = document.getElementById("interactButton");
-
-    const menuButton = document.getElementById("menuButton");
-    const resumeButton = document.getElementById("resumeButton");
-
-    const settingsButton = document.getElementById("settingsButton");
-    const closeSettingsButton = document.getElementById("closeSettingsButton");
-
-    const mapButton = document.getElementById("mapButton");
-    const closeMapButton = document.getElementById("closeMapButton");
-
-    const missionButton = document.getElementById("missionButton");
-    const closeMissionsButton = document.getElementById("closeMissionsButton");
-
-    const logoutButton = document.getElementById("logoutButton");
-
-    const cameraSensitivity =
-        document.getElementById("cameraSensitivity");
-
-    const playerNameDisplayElement =
-        document.getElementById("playerNameDisplay");
-
-    const createAccountButton =
-        document.getElementById("createAccountButton");
-
-    const generateCharacterButton =
-        document.getElementById("generateCharacterButton");
-
-    const loginButton =
-        document.getElementById("loginButton");
-
-    const facePhoto =
-        document.getElementById("facePhoto");
-
-    const maleButton =
-        document.getElementById("maleButton");
-
-    const femaleButton =
-        document.getElementById("femaleButton");
-
-    const missionText =
-        document.getElementById("missionText");
-
-    const destinationDistance =
-        document.getElementById("destinationDistance");
-
-    const interactionMessage =
-        document.getElementById("interactionMessage");
-
-    const interactionText =
-        document.getElementById("interactionText");
-
-    const navigationArrow =
-        document.getElementById("navigationArrow");
-
     /* =====================================================
-       THREE.JS
+       2. DOM REFERENCES
        ===================================================== */
 
-    const scene = new THREE.Scene();
+    const $ = (id) => document.getElementById(id);
 
-    scene.background =
-        new THREE.Color(0x87ceeb);
+    const canvas = $("gameCanvas");
+    const loadingScreen = $("loadingScreen");
+    const accountScreen = $("accountScreen");
+    const characterScreen = $("characterScreen");
+    const loginScreen = $("loginScreen");
 
-    scene.fog =
-        new THREE.Fog(0x87ceeb, 90, 430);
+    const nameInput = $("nameInput");
+    const passwordInput = $("passwordInput");
+    const loginPassword = $("loginPassword");
 
-    const camera =
-        new THREE.PerspectiveCamera(
-            70,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            700
+    const photoInput = $("photoInput");
+    const photoPreview = $("photoPreview");
+
+    const boyButton = $("boyButton");
+    const girlButton = $("girlButton");
+
+    const gameUI = $("gameUI");
+    const missionHUD = $("missionHUD");
+    const missionText = $("missionText");
+    const interactionMessage = $("interactionMessage");
+    const dialogueBox = $("dialogueBox");
+    const dialogueText = $("dialogueText");
+
+    const navigationArrow = $("navigationArrow");
+
+    const joystick = $("joystick");
+    const joystickKnob = $("joystickKnob");
+
+    const jumpButton = $("jumpButton");
+    const runButton = $("runButton");
+    const interactButton = $("interactButton");
+
+    const menuScreen = $("menuScreen");
+    const mapScreen = $("mapScreen");
+    const missionsScreen = $("missionsScreen");
+    const settingsScreen = $("settingsScreen");
+
+    /* =====================================================
+       3. GAME STATE
+       ===================================================== */
+
+    let scene;
+    let camera;
+    let renderer;
+
+    let player;
+    let playerBody;
+    let playerHead;
+    let leftArm;
+    let rightArm;
+    let leftLeg;
+    let rightLeg;
+
+    let clock;
+
+    let gameStarted = false;
+    let gamePaused = false;
+
+    let selectedGender = "boy";
+    let playerName = "";
+
+    let playerVelocityY = 0;
+    let playerGrounded = true;
+
+    let isRunning = false;
+    let isJumping = false;
+
+    let joystickX = 0;
+    let joystickY = 0;
+
+    let keyboardForward = false;
+    let keyboardBackward = false;
+    let keyboardLeft = false;
+    let keyboardRight = false;
+
+    let cameraYaw = 0;
+    let cameraPitch = -0.25;
+
+    let lookPointerActive = false;
+    let lastLookX = 0;
+    let lastLookY = 0;
+
+    let cameraDistance = 6;
+    let cameraHeight = 2.5;
+
+    let currentInteraction = null;
+
+    const greetedTeachers = {};
+
+    let dayTime = 0.35;
+
+    /* =====================================================
+       4. CONSTANTS
+       ===================================================== */
+
+    const PLAYER_SPEED = 3.2;
+    const RUN_SPEED = 6.0;
+    const JUMP_FORCE = 7.0;
+    const GRAVITY = 18.0;
+
+    const LOOK_SENSITIVITY = 0.005;
+
+    const WORLD_SIZE = 300;
+
+    const PLAYER_RADIUS = 0.45;
+
+    /* =====================================================
+       5. SIMPLE STORAGE
+       ===================================================== */
+
+    const STORAGE_KEY = "ABSS_GAME_ACCOUNT";
+
+    function getAccount() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error("Storage read error:", error);
+            return null;
+        }
+    }
+
+    function saveAccount(account) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(account));
+        } catch (error) {
+            console.error("Storage write error:", error);
+        }
+    }
+
+    /* =====================================================
+       6. SCREEN CONTROL
+       ===================================================== */
+
+    function hideAllScreens() {
+        [
+            loadingScreen,
+            accountScreen,
+            characterScreen,
+            loginScreen,
+            menuScreen,
+            mapScreen,
+            missionsScreen,
+            settingsScreen
+        ].forEach((el) => {
+            if (el) el.classList.add("hidden");
+        });
+    }
+
+    function showElement(el) {
+        if (el) el.classList.remove("hidden");
+    }
+
+    function hideElement(el) {
+        if (el) el.classList.add("hidden");
+    }
+
+    function startGameUI() {
+        hideAllScreens();
+
+        if (gameUI) {
+            gameUI.classList.remove("hidden");
+        }
+
+        gameStarted = true;
+        gamePaused = false;
+
+        if (renderer) {
+            renderer.domElement.style.display = "block";
+        }
+    }
+
+    /* =====================================================
+       7. LOADING
+       ===================================================== */
+
+    function finishLoading() {
+        setTimeout(() => {
+            hideElement(loadingScreen);
+
+            const account = getAccount();
+
+            if (account) {
+                showElement(loginScreen);
+            } else {
+                showElement(accountScreen);
+            }
+        }, 900);
+    }
+
+    /* =====================================================
+       8. ACCOUNT CREATION
+       ===================================================== */
+
+    function createAccount() {
+        if (!nameInput || !passwordInput) return;
+
+        const name = nameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!name) {
+            alert("Please enter your name.");
+            return;
+        }
+
+        if (password.length < 4) {
+            alert("Password must contain at least 4 characters.");
+            return;
+        }
+
+        playerName = name;
+
+        const account = {
+            name: name,
+            password: password,
+            gender: "boy",
+            photoName: "",
+            greetedTeachers: {},
+            createdAt: Date.now()
+        };
+
+        saveAccount(account);
+
+        hideElement(accountScreen);
+        showElement(characterScreen);
+    }
+
+    /* =====================================================
+       9. CHARACTER SELECTION
+       ===================================================== */
+
+    function selectGender(gender) {
+        selectedGender = gender;
+
+        if (boyButton) boyButton.classList.remove("selected");
+        if (girlButton) girlButton.classList.remove("selected");
+
+        if (gender === "boy" && boyButton) {
+            boyButton.classList.add("selected");
+        }
+
+        if (gender === "girl" && girlButton) {
+            girlButton.classList.add("selected");
+        }
+    }
+
+    if (boyButton) {
+        boyButton.addEventListener("click", () => selectGender("boy"));
+    }
+
+    if (girlButton) {
+        girlButton.addEventListener("click", () => selectGender("girl"));
+    }
+
+    /* =====================================================
+       10. PHOTO PREVIEW
+       ===================================================== */
+
+    if (photoInput) {
+        photoInput.addEventListener("change", () => {
+            const file = photoInput.files && photoInput.files[0];
+
+            if (!file) return;
+
+            if (!file.type.startsWith("image/")) {
+                alert("Please select an image.");
+                photoInput.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                if (photoPreview) {
+                    photoPreview.src = event.target.result;
+                    photoPreview.classList.remove("hidden");
+                }
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /* =====================================================
+       11. LOGIN
+       ===================================================== */
+
+    function loginUser() {
+        const account = getAccount();
+
+        if (!account) {
+            hideElement(loginScreen);
+            showElement(accountScreen);
+            return;
+        }
+
+        const enteredPassword = loginPassword
+            ? loginPassword.value
+            : "";
+
+        if (enteredPassword !== account.password) {
+            alert("Wrong password.");
+            return;
+        }
+
+        playerName = account.name;
+        selectedGender = account.gender || "boy";
+
+        Object.assign(
+            greetedTeachers,
+            account.greetedTeachers || {}
         );
 
-    const renderer =
-        new THREE.WebGLRenderer({
+        startGame();
+    }
+
+    /* =====================================================
+       12. FINISH CHARACTER CREATION
+       ===================================================== */
+
+    function finishCharacterCreation() {
+        const account = getAccount();
+
+        if (!account) {
+            alert("Please create an account first.");
+            return;
+        }
+
+        account.gender = selectedGender;
+
+        if (photoInput && photoInput.files && photoInput.files[0]) {
+            account.photoName = photoInput.files[0].name;
+        }
+
+        saveAccount(account);
+
+        playerName = account.name;
+
+        startGame();
+    }
+
+    /* =====================================================
+       13. THREE.JS INITIALIZATION
+       ===================================================== */
+
+    function initThree() {
+        scene = new THREE.Scene();
+
+        scene.background = new THREE.Color(0x87b9e8);
+
+        scene.fog = new THREE.Fog(
+            0x87b9e8,
+            90,
+            270
+        );
+
+        clock = new THREE.Clock();
+
+        camera = new THREE.PerspectiveCamera(
+            65,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            500
+        );
+
+        camera.position.set(
+            0,
+            cameraHeight,
+            cameraDistance
+        );
+
+        renderer = new THREE.WebGLRenderer({
             canvas: canvas,
             antialias: true,
             powerPreference: "high-performance"
         });
 
-    renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio || 1, 1.75)
-    );
-
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type =
-        THREE.PCFSoftShadowMap;
-
-    /* =====================================================
-       LIGHT
-       ===================================================== */
-
-    const hemi =
-        new THREE.HemisphereLight(
-            0xffffff,
-            0x3d5136,
-            1.7
+        renderer.setPixelRatio(
+            Math.min(window.devicePixelRatio || 1, 2)
         );
 
-    scene.add(hemi);
-
-    const sun =
-        new THREE.DirectionalLight(
-            0xffffff,
-            2.2
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
         );
 
-    sun.position.set(80, 120, 70);
-    sun.castShadow = true;
+        renderer.shadowMap.enabled = true;
 
-    sun.shadow.mapSize.width = 1024;
-    sun.shadow.mapSize.height = 1024;
+        renderer.shadowMap.type =
+            THREE.PCFSoftShadowMap;
 
-    sun.shadow.camera.left = -180;
-    sun.shadow.camera.right = 180;
-    sun.shadow.camera.top = 180;
-    sun.shadow.camera.bottom = -180;
+        renderer.outputColorSpace =
+            THREE.SRGBColorSpace;
 
-    scene.add(sun);
+        renderer.toneMapping =
+            THREE.ACESFilmicToneMapping;
 
-    /* =====================================================
-       VARIABLES
-       ===================================================== */
+        renderer.toneMappingExposure = 1.05;
 
-    const colliders = [];
-    const doors = [];
-    const animatedTrees = [];
+        setupLights();
+        createWorld();
+        createPlayer();
+        setupInput();
 
-    const keys = Object.create(null);
+        window.addEventListener(
+            "resize",
+            onResize
+        );
 
-    let player;
-    let playerBody;
-    let playerHead;
-    let leftLeg;
-    let rightLeg;
-    let leftArm;
-    let rightArm;
-
-    let selectedGender = "male";
-
-    let isRunning = false;
-    let touchRun = false;
-
-    let isGrounded = true;
-    let verticalVelocity = 0;
-
-    let walkCycle = 0;
-
-    /*
-       IMPORTANT:
-
-       cameraYaw has NO horizontal limit.
-
-       This gives TRUE 360° horizontal rotation.
-    */
-
-    let cameraYaw = 0;
-
-    /*
-       Nearly straight up/down.
-       Only vertical flip is prevented.
-    */
-
-    let cameraPitch = -0.12;
-
-    let lookPointerId = null;
-    let lookLastX = 0;
-    let lookLastY = 0;
-
-    let joystickPointerId = null;
-
-    let joystickX = 0;
-    let joystickY = 0;
-
-    let paused = false;
-
-    let interactTarget = null;
-
-    let currentMission = "Main Gate";
-
-    let lastTime = performance.now();
-
-    const cameraDistance = 8.5;
-    const cameraTargetHeight = 1.65;
+        animate();
+    }
 
     /* =====================================================
-       MATERIALS
+       14. LIGHTING
        ===================================================== */
 
-    const mats = {
+    let sunLight;
+    let ambientLight;
 
-        grass:
-            new THREE.MeshStandardMaterial({
-                color: 0x4f843f,
-                roughness: 1
-            }),
+    function setupLights() {
+        ambientLight = new THREE.HemisphereLight(
+            0xffffff,
+            0x4d6744,
+            1.5
+        );
 
-        road:
-            new THREE.MeshStandardMaterial({
-                color: 0x666a6e,
-                roughness: 0.9
-            }),
+        scene.add(ambientLight);
 
-        red:
-            new THREE.MeshStandardMaterial({
-                color: 0xa94337,
-                roughness: 0.85
-            }),
+        sunLight = new THREE.DirectionalLight(
+            0xffffff,
+            2.0
+        );
 
-        redDark:
-            new THREE.MeshStandardMaterial({
-                color: 0x843329,
-                roughness: 0.9
-            }),
+        sunLight.position.set(
+            70,
+            100,
+            50
+        );
 
-        white:
-            new THREE.MeshStandardMaterial({
-                color: 0xf2f2ed,
-                roughness: 0.8
-            }),
+        sunLight.castShadow = true;
 
-        glass:
-            new THREE.MeshStandardMaterial({
-                color: 0x6ca8c9,
-                metalness: 0.15,
-                roughness: 0.2,
-                transparent: true,
-                opacity: 0.72
-            }),
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
 
-        dark:
-            new THREE.MeshStandardMaterial({
-                color: 0x20262c,
-                roughness: 0.8
-            }),
+        sunLight.shadow.camera.left = -120;
+        sunLight.shadow.camera.right = 120;
+        sunLight.shadow.camera.top = 120;
+        sunLight.shadow.camera.bottom = -120;
 
-        green:
-            new THREE.MeshStandardMaterial({
-                color: 0x2e6b35,
-                roughness: 1
-            }),
+        sunLight.shadow.camera.near = 1;
+        sunLight.shadow.camera.far = 300;
 
-        trunk:
-            new THREE.MeshStandardMaterial({
-                color: 0x65462c,
-                roughness: 1
-            }),
-
-        gate:
-            new THREE.MeshStandardMaterial({
-                color: 0x31363b,
-                metalness: 0.35,
-                roughness: 0.55
-            })
-    };
+        scene.add(sunLight);
+    }
 
     /* =====================================================
-       BASIC BOX
+       15. MATERIAL HELPERS
        ===================================================== */
+
+    function material(color, roughness = 0.8) {
+        return new THREE.MeshStandardMaterial({
+            color: color,
+            roughness: roughness,
+            metalness: 0
+        });
+    }
 
     function box(
-        w,
-        h,
-        d,
-        material,
+        width,
+        height,
+        depth,
+        color,
         x,
         y,
-        z,
-        parent
+        z
     ) {
-        const mesh =
-            new THREE.Mesh(
-                new THREE.BoxGeometry(w, h, d),
-                material
+        const geometry =
+            new THREE.BoxGeometry(
+                width,
+                height,
+                depth
             );
 
-        mesh.position.set(
-            x || 0,
-            y || 0,
-            z || 0
+        const mesh = new THREE.Mesh(
+            geometry,
+            material(color)
         );
+
+        mesh.position.set(x, y, z);
 
         mesh.castShadow = true;
         mesh.receiveShadow = true;
 
-        (parent || scene).add(mesh);
+        scene.add(mesh);
 
         return mesh;
     }
 
     /* =====================================================
-       COLLIDER
-       ===================================================== */
-
-    function addCollider(
-        x,
-        z,
-        w,
-        d,
-        minY,
-        maxY
-    ) {
-        colliders.push({
-            minX: x - w / 2,
-            maxX: x + w / 2,
-            minZ: z - d / 2,
-            maxZ: z + d / 2,
-            minY: minY || 0,
-            maxY: maxY || 20
-        });
-    }
-
-    /* =====================================================
-       GROUND
+       16. GROUND
        ===================================================== */
 
     function createGround() {
+        const geometry =
+            new THREE.PlaneGeometry(
+                WORLD_SIZE,
+                WORLD_SIZE,
+                20,
+                20
+            );
 
         const ground =
             new THREE.Mesh(
-                new THREE.PlaneGeometry(500, 500),
-                mats.grass
+                geometry,
+                material(0x3f7041)
             );
 
         ground.rotation.x = -Math.PI / 2;
@@ -381,936 +561,1319 @@
         ground.receiveShadow = true;
 
         scene.add(ground);
-
-        box(
-            28,
-            0.06,
-            190,
-            mats.road,
-            0,
-            0.03,
-            0
-        );
-
-        box(
-            190,
-            0.06,
-            18,
-            mats.road,
-            0,
-            0.04,
-            -8
-        );
-
-        box(
-            120,
-            0.06,
-            10,
-            mats.road,
-            0,
-            0.05,
-            55
-        );
-
-        box(
-            10,
-            0.06,
-            95,
-            mats.road,
-            -62,
-            0.05,
-            50
-        );
-
-        box(
-            10,
-            0.06,
-            95,
-            mats.road,
-            62,
-            0.05,
-            50
-        );
     }
 
     /* =====================================================
-       BUILDINGS
+       17. ROADS
        ===================================================== */
+
+    function createRoad(
+        width,
+        length,
+        x,
+        z,
+        rotation = 0
+    ) {
+        const road = box(
+            width,
+            0.08,
+            length,
+            0x454545,
+            x,
+            0.04,
+            z
+        );
+
+        road.rotation.y = rotation;
+
+        return road;
+    }
+
+    /* =====================================================
+       18. PATHS
+       ===================================================== */
+
+    function createPath(
+        width,
+        length,
+        x,
+        z,
+        rotation = 0
+    ) {
+        const path = box(
+            width,
+            0.06,
+            length,
+            0xb9b29d,
+            x,
+            0.07,
+            z
+        );
+
+        path.rotation.y = rotation;
+
+        return path;
+    }
+
+    /* =====================================================
+       19. BUILDING CREATOR
+       ===================================================== */
+
+    const buildings = [];
 
     function createBuilding(
         name,
-        x,
-        z,
         width,
+        height,
         depth,
-        floors,
-        withGlassEntrance
+        x,
+        z
     ) {
-
         const group =
             new THREE.Group();
 
-        group.position.set(x, 0, z);
+        group.name = name;
 
-        scene.add(group);
-
-        const floorHeight = 3.2;
-        const totalHeight =
-            floors * floorHeight;
-
-        box(
-            width,
-            totalHeight,
-            depth,
-            mats.red,
-            0,
-            totalHeight / 2,
-            0,
-            group
-        );
-
-        for (
-            let f = 1;
-            f < floors;
-            f++
-        ) {
-
-            box(
-                width + 0.15,
-                0.16,
-                depth + 0.15,
-                mats.white,
-                0,
-                f * floorHeight,
-                0,
-                group
+        const main =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    width,
+                    height,
+                    depth
+                ),
+                material(0xb94b3b)
             );
+
+        main.position.y =
+            height / 2;
+
+        main.castShadow = true;
+        main.receiveShadow = true;
+
+        group.add(main);
+
+        /* White floor bands */
+
+        const floorCount = 4;
+
+        for (let i = 1; i <= floorCount; i++) {
+            const band =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        width + 0.08,
+                        0.14,
+                        depth + 0.08
+                    ),
+                    material(0xf2f0e8)
+                );
+
+            band.position.y =
+                (height / floorCount) * i;
+
+            band.castShadow = true;
+
+            group.add(band);
         }
 
-        const columns =
+        /* Windows */
+
+        const windowMaterial =
+            new THREE.MeshStandardMaterial({
+                color: 0x78b7d6,
+                roughness: 0.2,
+                metalness: 0.15
+            });
+
+        const windowRows = 4;
+        const windowsPerRow =
             Math.max(
-                4,
-                Math.floor(width / 5)
+                3,
+                Math.floor(width / 4)
             );
 
-        const windowW =
-            Math.min(
-                2.4,
-                width / columns - 0.5
-            );
-
-        const frontZ =
-            -depth / 2 - 0.03;
-
-        for (
-            let f = 0;
-            f < floors;
-            f++
-        ) {
-
+        for (let row = 0; row < windowRows; row++) {
             for (
-                let c = 0;
-                c < columns;
-                c++
+                let col = 0;
+                col < windowsPerRow;
+                col++
             ) {
+                const w =
+                    new THREE.Mesh(
+                        new THREE.BoxGeometry(
+                            1.35,
+                            1.15,
+                            0.08
+                        ),
+                        windowMaterial
+                    );
 
-                const wx =
+                const spacing =
+                    width /
+                    (windowsPerRow + 1);
+
+                w.position.set(
                     -width / 2 +
-                    (c + 0.5) *
-                    (width / columns);
-
-                box(
-                    windowW,
-                    1.35,
-                    0.08,
-                    mats.glass,
-                    wx,
-                    1.25 +
-                        f * floorHeight,
-                    frontZ,
-                    group
+                    spacing * (col + 1),
+                    2.1 + row * 3.1,
+                    depth / 2 + 0.05
                 );
+
+                group.add(w);
+
+                const backW =
+                    w.clone();
+
+                backW.position.z =
+                    -depth / 2 - 0.05;
+
+                group.add(backW);
             }
         }
 
-        for (
-            let f = 0;
-            f < floors;
-            f++
-        ) {
-
-            box(
-                width + 0.35,
-                0.13,
-                1.1,
-                mats.white,
-                0,
-                0.18 +
-                    f * floorHeight,
-                depth / 2 + 0.35,
-                group
-            );
-        }
-
-        if (withGlassEntrance) {
-
-            box(
-                5.8,
-                3.5,
-                0.18,
-                mats.glass,
-                0,
-                1.75,
-                -depth / 2 - 0.16,
-                group
-            );
-
-            box(
-                0.18,
-                3.6,
-                0.3,
-                mats.dark,
-                -3,
-                1.8,
-                -depth / 2 - 0.2,
-                group
-            );
-
-            box(
-                0.18,
-                3.6,
-                0.3,
-                mats.dark,
-                3,
-                1.8,
-                -depth / 2 - 0.2,
-                group
-            );
-        }
-
-        addCollider(
+        group.position.set(
             x,
-            z,
-            width,
-            depth,
             0,
-            totalHeight
+            z
         );
+
+        scene.add(group);
+
+        buildings.push({
+            name,
+            object: group,
+            width,
+            height,
+            depth,
+            x,
+            z
+        });
 
         return group;
     }
 
     /* =====================================================
-       MAIN GATE
+       20. MAIN COLLEGE
        ===================================================== */
 
-    function createMainGate() {
-
-        const z = 106;
-
-        box(
-            4.2,
-            10,
-            4.2,
-            mats.redDark,
-            -10,
-            5,
-            z
+    function createCollege() {
+        createBuilding(
+            "Mahatma Gandhi Block",
+            42,
+            15,
+            22,
+            -42,
+            -30
         );
 
-        box(
-            4.2,
-            10,
-            4.2,
-            mats.redDark,
-            10,
-            5,
-            z
-        );
-
-        box(
-            20,
-            2.1,
-            0.7,
-            mats.white,
+        createBuilding(
+            "Main ABSS College",
+            50,
+            15,
+            25,
             0,
-            8.7,
-            z - 0.1
+            -32
         );
 
-        box(
-            18.5,
-            1,
-            0.25,
-            mats.red,
-            0,
-            8.7,
-            z - 0.5
+        createBuilding(
+            "Vishvesvaraya Block",
+            42,
+            15,
+            22,
+            44,
+            -30
         );
 
-        const left =
-            box(
-                9.5,
-                4.8,
-                0.25,
-                mats.gate,
-                -4.8,
-                2.4,
-                z - 0.25
-            );
-
-        const right =
-            box(
-                9.5,
-                4.8,
-                0.25,
-                mats.gate,
-                4.8,
-                2.4,
-                z - 0.25
-            );
-
-        doors.push({
-            left: left,
-            right: right,
-            closedLeft: -4.8,
-            closedRight: 4.8,
-            openLeft: -9.6,
-            openRight: 9.6,
-            progress: 0
-        });
-
-        addCollider(
-            -10,
-            z,
-            4.2,
-            4.2,
+        createBuilding(
+            "Madan Mohan Malviya Block",
+            38,
+            15,
+            21,
             0,
-            10
-        );
-
-        addCollider(
-            10,
-            z,
-            4.2,
-            4.2,
-            0,
-            10
+            -65
         );
     }
 
     /* =====================================================
-       TREES
+       21. HOSTELS
        ===================================================== */
 
-    function createTree(
-        x,
-        z,
-        scale
-    ) {
-
-        const group =
-            new THREE.Group();
-
-        group.position.set(x, 0, z);
-
-        group.scale.setScalar(
-            scale || 1
+    function createHostels() {
+        createBuilding(
+            "Chandrashekhar Azad Boys Hostel",
+            38,
+            15,
+            23,
+            -52,
+            42
         );
 
-        scene.add(group);
-
-        box(
-            0.75,
-            4.2,
-            0.75,
-            mats.trunk,
-            0,
-            2.1,
-            0,
-            group
+        createBuilding(
+            "Girls Hostel",
+            38,
+            15,
+            23,
+            52,
+            42
         );
-
-        const crown =
-            new THREE.Mesh(
-                new THREE.SphereGeometry(
-                    2.5,
-                    10,
-                    8
-                ),
-                mats.green
-            );
-
-        crown.position.y = 5;
-        crown.castShadow = true;
-
-        group.add(crown);
-
-        animatedTrees.push({
-            crown: crown,
-            phase: Math.random() *
-                Math.PI * 2
-        });
     }
 
-    function createGarden(
-        x,
-        z,
-        width,
-        depth
-    ) {
+    /* =====================================================
+       22. MAIN GATE
+       ===================================================== */
 
-        const garden =
+    let leftGate;
+    let rightGate;
+
+    function createMainGate() {
+        const gateGroup =
+            new THREE.Group();
+
+        gateGroup.name =
+            "ABSS Main Gate";
+
+        const pillarMaterial =
+            material(0x8d4035);
+
+        const pillar1 =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
-                    width,
-                    0.12,
-                    depth
+                    2.5,
+                    8,
+                    2.5
                 ),
-                mats.green
+                pillarMaterial
             );
 
-        garden.position.set(
+        pillar1.position.set(
+            -9,
+            4,
+            82
+        );
+
+        pillar1.castShadow = true;
+
+        gateGroup.add(pillar1);
+
+        const pillar2 =
+            pillar1.clone();
+
+        pillar2.position.x = 9;
+
+        gateGroup.add(pillar2);
+
+        const sign =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    16,
+                    2,
+                    0.6
+                ),
+                material(0xe8dfca)
+            );
+
+        sign.position.set(
+            0,
+            7.5,
+            82
+        );
+
+        sign.castShadow = true;
+
+        gateGroup.add(sign);
+
+        const signCanvas =
+            document.createElement("canvas");
+
+        signCanvas.width = 1024;
+        signCanvas.height = 160;
+
+        const ctx =
+            signCanvas.getContext("2d");
+
+        ctx.fillStyle = "#eee6d2";
+        ctx.fillRect(
+            0,
+            0,
+            signCanvas.width,
+            signCanvas.height
+        );
+
+        ctx.fillStyle = "#7e2e25";
+        ctx.font =
+            "bold 58px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(
+            "ABSS INSTITUTE OF TECHNOLOGY",
+            512,
+            80
+        );
+
+        const texture =
+            new THREE.CanvasTexture(
+                signCanvas
+            );
+
+        const signFront =
+            new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    15.6,
+                    1.8
+                ),
+                new THREE.MeshBasicMaterial({
+                    map: texture
+                })
+            );
+
+        signFront.position.set(
+            0,
+            7.5,
+            82.34
+        );
+
+        gateGroup.add(signFront);
+
+        leftGate =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    8,
+                    5,
+                    0.35
+                ),
+                material(0x222222)
+            );
+
+        rightGate =
+            leftGate.clone();
+
+        leftGate.position.set(
+            -4,
+            2.5,
+            81.6
+        );
+
+        rightGate.position.set(
+            4,
+            2.5,
+            81.6
+        );
+
+        gateGroup.add(leftGate);
+        gateGroup.add(rightGate);
+
+        scene.add(gateGroup);
+    }
+
+    /* =====================================================
+       23. TREES
+       ===================================================== */
+
+    const trees = [];
+
+    function createTree(x, z, scale = 1) {
+        const tree =
+            new THREE.Group();
+
+        const trunk =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.25 * scale,
+                    0.38 * scale,
+                    3 * scale,
+                    8
+                ),
+                material(0x65452d)
+            );
+
+        trunk.position.y =
+            1.5 * scale;
+
+        trunk.castShadow = true;
+
+        tree.add(trunk);
+
+        const leaves =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    1.8 * scale,
+                    12,
+                    10
+                ),
+                material(0x286b35)
+            );
+
+        leaves.position.y =
+            4 * scale;
+
+        leaves.castShadow = true;
+
+        tree.add(leaves);
+
+        tree.position.set(
             x,
-            0.06,
+            0,
             z
         );
 
-        garden.receiveShadow = true;
+        scene.add(tree);
 
-        scene.add(garden);
+        trees.push(tree);
+
+        return tree;
+    }
+
+    function createPalm(x, z, scale = 1) {
+        const palm =
+            new THREE.Group();
+
+        const trunk =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.18 * scale,
+                    0.3 * scale,
+                    5 * scale,
+                    8
+                ),
+                material(0x715238)
+            );
+
+        trunk.position.y =
+            2.5 * scale;
+
+        trunk.castShadow = true;
+
+        palm.add(trunk);
 
         for (
             let i = 0;
-            i < 8;
+            i < 7;
             i++
         ) {
+            const leaf =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        0.18 * scale,
+                        0.08 * scale,
+                        2.5 * scale
+                    ),
+                    material(0x2e7534)
+                );
 
-            const tx =
-                x -
-                width / 2 +
-                4 +
-                (i % 4) *
-                (width - 8) / 3;
+            leaf.position.y =
+                5.1 * scale;
 
-            const tz =
-                z -
-                depth / 2 +
-                4 +
-                Math.floor(i / 4) *
-                (depth - 8);
+            leaf.rotation.y =
+                (i / 7) *
+                Math.PI *
+                2;
+
+            leaf.rotation.x =
+                -0.35;
+
+            palm.add(leaf);
+        }
+
+        palm.position.set(
+            x,
+            0,
+            z
+        );
+
+        scene.add(palm);
+
+        trees.push(palm);
+
+        return palm;
+    }
+
+    /* =====================================================
+       24. GARDENS
+       ===================================================== */
+
+    function createGarden(x, z, width, depth) {
+        const garden =
+            box(
+                width,
+                0.04,
+                depth,
+                0x5a9149,
+                x,
+                0.02,
+                z
+            );
+
+        garden.receiveShadow = true;
+
+        for (
+            let i = 0;
+            i < 10;
+            i++
+        ) {
+            const px =
+                x +
+                (Math.random() - 0.5) *
+                width *
+                0.85;
+
+            const pz =
+                z +
+                (Math.random() - 0.5) *
+                depth *
+                0.85;
 
             createTree(
-                tx,
-                tz,
-                0.75 +
-                (i % 2) * 0.18
+                px,
+                pz,
+                0.5 +
+                Math.random() * 0.4
             );
         }
     }
 
     /* =====================================================
-       PLAYER
+       25. SPORTS AREA
+       ===================================================== */
+
+    function createSportsArea() {
+        const court =
+            box(
+                28,
+                0.08,
+                18,
+                0x8c4d35,
+                55,
+                -5,
+                0
+            );
+
+        court.receiveShadow = true;
+
+        const line =
+            new THREE.LineSegments(
+                new THREE.EdgesGeometry(
+                    new THREE.BoxGeometry(
+                        28,
+                        0.1,
+                        18
+                    )
+                ),
+                new THREE.LineBasicMaterial({
+                    color: 0xffffff
+                })
+            );
+
+        line.position.set(
+            55,
+            0.12,
+            -5
+        );
+
+        scene.add(line);
+
+        const center =
+            box(
+                0.15,
+                0.15,
+                18,
+                0xffffff,
+                55,
+                0.15,
+                -5
+            );
+
+        center.receiveShadow = true;
+    }
+
+    /* =====================================================
+       26. SIMPLE BENCHES
+       ===================================================== */
+
+    function createBench(x, z, rotation = 0) {
+        const bench =
+            new THREE.Group();
+
+        const seat =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    2.8,
+                    0.25,
+                    0.55
+                ),
+                material(0x69452e)
+            );
+
+        seat.position.y = 1;
+
+        bench.add(seat);
+
+        const back =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    2.8,
+                    1.1,
+                    0.18
+                ),
+                material(0x69452e)
+            );
+
+        back.position.set(
+            0,
+            1.45,
+            -0.2
+        );
+
+        bench.add(back);
+
+        for (
+            const lx of [-1.05, 1.05]
+        ) {
+            const leg =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        0.2,
+                        1,
+                        0.2
+                    ),
+                    material(0x333333)
+                );
+
+            leg.position.set(
+                lx,
+                0.5,
+                0
+            );
+
+            bench.add(leg);
+        }
+
+        bench.position.set(
+            x,
+            0,
+            z
+        );
+
+        bench.rotation.y =
+            rotation;
+
+        scene.add(bench);
+    }
+
+    /* =====================================================
+       27. WORLD CREATION
+       ===================================================== */
+
+    function createWorld() {
+        createGround();
+
+        createRoad(
+            10,
+            190,
+            0,
+            0,
+            0
+        );
+
+        createRoad(
+            10,
+            190,
+            0,
+            0,
+            Math.PI / 2
+        );
+
+        createPath(
+            5,
+            70,
+            0,
+            35,
+            0
+        );
+
+        createPath(
+            5,
+            65,
+            -30,
+            15,
+            Math.PI / 2
+        );
+
+        createCollege();
+        createHostels();
+        createMainGate();
+
+        createSportsArea();
+
+        createGarden(
+            -75,
+            -20,
+            25,
+            35
+        );
+
+        createGarden(
+            75,
+            -25,
+            25,
+            35
+        );
+
+        createGarden(
+            -10,
+            55,
+            25,
+            18
+        );
+
+        const treePositions = [
+            [-80, 70],
+            [-70, 55],
+            [-78, 35],
+            [-25, 78],
+            [25, 78],
+            [70, 70],
+            [80, 45],
+            [75, 20],
+            [-75, 10],
+            [-82, -45],
+            [82, -45]
+        ];
+
+        treePositions.forEach(
+            ([x, z]) =>
+                createTree(
+                    x,
+                    z,
+                    0.8 +
+                    Math.random() * 0.5
+                )
+        );
+
+        createPalm(
+            -70,
+            -5,
+            1
+        );
+
+        createPalm(
+            70,
+            -5,
+            1
+        );
+
+        createPalm(
+            -65,
+            60,
+            1.1
+        );
+
+        createPalm(
+            65,
+            60,
+            1.1
+        );
+
+        createBench(
+            -15,
+            15,
+            Math.PI / 2
+        );
+
+        createBench(
+            18,
+            15,
+            -Math.PI / 2
+        );
+    }
+
+    /* =====================================================
+       28. PLAYER
        ===================================================== */
 
     function createPlayer() {
-
         player =
             new THREE.Group();
 
-        const bodyMat =
-            new THREE.MeshStandardMaterial({
-                color: 0xf0f0f0,
-                roughness: 0.75
-            });
+        player.name = "Player";
 
-        const skinMat =
-            new THREE.MeshStandardMaterial({
-                color: 0xc88963,
-                roughness: 0.85
-            });
-
-        const legMat =
-            new THREE.MeshStandardMaterial({
-                color: 0x222831,
-                roughness: 0.9
-            });
-
-        const shoeMat =
-            new THREE.MeshStandardMaterial({
-                color: 0x111111,
-                roughness: 0.85
-            });
+        /* Body */
 
         playerBody =
             new THREE.Mesh(
-                new THREE.CapsuleGeometry(
-                    0.5,
-                    1.2,
-                    5,
-                    10
+                new THREE.BoxGeometry(
+                    0.9,
+                    1.25,
+                    0.55
                 ),
-                bodyMat
+                material(0xf4f4f4)
             );
 
-        playerBody.position.y = 1.65;
+        playerBody.position.y =
+            1.55;
+
         playerBody.castShadow = true;
 
         player.add(playerBody);
 
+        /* Head */
+
         playerHead =
             new THREE.Mesh(
                 new THREE.SphereGeometry(
-                    0.43,
+                    0.38,
                     16,
-                    12
+                    16
                 ),
-                skinMat
+                material(0xc98762)
             );
 
-        playerHead.position.y = 2.75;
+        playerHead.position.y =
+            2.5;
+
         playerHead.castShadow = true;
 
         player.add(playerHead);
 
-        leftLeg =
+        /* Hair */
+
+        const hair =
             new THREE.Mesh(
-                new THREE.BoxGeometry(
-                    0.35,
-                    1.1,
-                    0.4
+                new THREE.SphereGeometry(
+                    0.4,
+                    16,
+                    8,
+                    0,
+                    Math.PI * 2,
+                    0,
+                    Math.PI * 0.55
                 ),
-                legMat
+                material(0x211814)
             );
 
-        rightLeg =
-            leftLeg.clone();
+        hair.position.y =
+            2.68;
 
-        leftLeg.position.set(
-            -0.22,
-            0.55,
-            0
+        player.add(hair);
+
+        /* ABSSIT shirt marking */
+
+        const shirtCanvas =
+            document.createElement("canvas");
+
+        shirtCanvas.width = 256;
+        shirtCanvas.height = 256;
+
+        const shirtCtx =
+            shirtCanvas.getContext("2d");
+
+        shirtCtx.fillStyle = "#f4f4f4";
+
+        shirtCtx.fillRect(
+            0,
+            0,
+            256,
+            256
         );
 
-        rightLeg.position.set(
-            0.22,
-            0.55,
-            0
+        shirtCtx.fillStyle = "#9c3028";
+
+        shirtCtx.font =
+            "bold 38px Arial";
+
+        shirtCtx.textAlign =
+            "center";
+
+        shirtCtx.fillText(
+            "ABSSIT",
+            128,
+            145
         );
 
-        player.add(
-            leftLeg,
-            rightLeg
-        );
+        const shirtTexture =
+            new THREE.CanvasTexture(
+                shirtCanvas
+            );
+
+        playerBody.material =
+            new THREE.MeshStandardMaterial({
+                map: shirtTexture,
+                roughness: 0.8
+            });
+
+        /* Arms */
 
         leftArm =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
-                    0.28,
-                    1,
-                    0.28
+                    0.25,
+                    1.05,
+                    0.25
                 ),
-                bodyMat
+                material(0xc98762)
             );
 
         rightArm =
             leftArm.clone();
 
         leftArm.position.set(
-            -0.63,
-            1.65,
+            -0.62,
+            1.55,
             0
         );
 
         rightArm.position.set(
-            0.63,
-            1.65,
+            0.62,
+            1.55,
             0
         );
 
-        player.add(
-            leftArm,
-            rightArm
-        );
+        leftArm.castShadow = true;
+        rightArm.castShadow = true;
 
-        const shoeL =
+        player.add(leftArm);
+        player.add(rightArm);
+
+        /* Legs */
+
+        leftLeg =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
-                    0.42,
-                    0.18,
-                    0.65
+                    0.3,
+                    1.15,
+                    0.32
                 ),
-                shoeMat
+                material(0x26364d)
             );
 
-        const shoeR =
-            shoeL.clone();
+        rightLeg =
+            leftLeg.clone();
 
-        shoeL.position.set(
-            -0.22,
-            0.08,
-            -0.12
+        leftLeg.position.set(
+            -0.25,
+            0.55,
+            0
         );
 
-        shoeR.position.set(
-            0.22,
-            0.08,
-            -0.12
+        rightLeg.position.set(
+            0.25,
+            0.55,
+            0
         );
 
-        player.add(
-            shoeL,
-            shoeR
+        leftLeg.castShadow = true;
+        rightLeg.castShadow = true;
+
+        player.add(leftLeg);
+        player.add(rightLeg);
+
+        /* Shoes */
+
+        const shoeMaterial =
+            material(0x202020);
+
+        const shoe1 =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    0.38,
+                    0.18,
+                    0.55
+                ),
+                shoeMaterial
+            );
+
+        const shoe2 =
+            shoe1.clone();
+
+        shoe1.position.set(
+            -0.25,
+            -0.02,
+            0.08
         );
+
+        shoe2.position.set(
+            0.25,
+            -0.02,
+            0.08
+        );
+
+        player.add(shoe1);
+        player.add(shoe2);
 
         player.position.set(
             0,
             0,
-            92
+            65
         );
 
         scene.add(player);
     }
 
     /* =====================================================
-       BUILD ABSS WORLD
+       29. PLAYER COLLISION
        ===================================================== */
 
-    function buildWorld() {
+    function isInsideBuilding(
+        x,
+        z
+    ) {
+        for (const b of buildings) {
+            const halfW =
+                b.width / 2 +
+                PLAYER_RADIUS;
 
-        createGround();
+            const halfD =
+                b.depth / 2 +
+                PLAYER_RADIUS;
 
-        createBuilding(
-            "Mahatma Gandhi Block",
-            -58,
-            -42,
-            38,
-            25,
-            4,
-            false
-        );
-
-        createBuilding(
-            "Main ABSS College",
-            0,
-            -30,
-            56,
-            30,
-            4,
-            true
-        );
-
-        createBuilding(
-            "Vishvesvaraya Block",
-            58,
-            -42,
-            38,
-            25,
-            4,
-            false
-        );
-
-        createBuilding(
-            "CSA Boys Hostel",
-            -68,
-            53,
-            38,
-            25,
-            4,
-            true
-        );
-
-        createBuilding(
-            "Girls Hostel",
-            68,
-            53,
-            38,
-            25,
-            4,
-            true
-        );
-
-        createMainGate();
-
-        createGarden(
-            -30,
-            25,
-            34,
-            25
-        );
-
-        createGarden(
-            30,
-            25,
-            34,
-            25
-        );
-
-        createGarden(
-            -35,
-            -78,
-            45,
-            22
-        );
-
-        createGarden(
-            35,
-            -78,
-            45,
-            22
-        );
-
-        for (
-            let i = -5;
-            i <= 5;
-            i++
-        ) {
-            createTree(
-                i * 13,
-                82,
-                0.8
-            );
-        }
-
-        for (
-            let i = -4;
-            i <= 4;
-            i++
-        ) {
-            createTree(
-                i * 15,
-                -95,
-                0.75
-            );
-        }
-    }
-
-    /* =====================================================
-       SCREEN CONTROL
-       ===================================================== */
-
-    function showOnly(element) {
-
-        [
-            accountScreen,
-            characterSetupScreen,
-            loginScreen,
-            gameMenu,
-            settingsScreen,
-            mapScreen,
-            missionsScreen
-        ].forEach(function (el) {
-
-            if (el) {
-                el.classList.add("hidden");
+            if (
+                x >
+                    b.x - halfW &&
+                x <
+                    b.x + halfW &&
+                z >
+                    b.z - halfD &&
+                z <
+                    b.z + halfD
+            ) {
+                return true;
             }
-        });
-
-        if (element) {
-            element.classList.remove("hidden");
         }
+
+        return false;
     }
 
-    function startGameUI() {
+    function clampPlayerToWorld() {
+        player.position.x =
+            THREE.MathUtils.clamp(
+                player.position.x,
+                -WORLD_SIZE / 2 + 2,
+                WORLD_SIZE / 2 - 2
+            );
 
-        [
-            accountScreen,
-            characterSetupScreen,
-            loginScreen,
-            gameMenu,
-            settingsScreen,
-            mapScreen,
-            missionsScreen
-        ].forEach(function (el) {
+        player.position.z =
+            THREE.MathUtils.clamp(
+                player.position.z,
+                -WORLD_SIZE / 2 + 2,
+                WORLD_SIZE / 2 - 2
+            );
+    }
 
-            if (el) {
-                el.classList.add("hidden");
+    /* =====================================================
+       30. INPUT
+       ===================================================== */
+
+    function setupInput() {
+        window.addEventListener(
+            "keydown",
+            (event) => {
+                switch (event.code) {
+                    case "KeyW":
+                    case "ArrowUp":
+                        keyboardForward = true;
+                        break;
+
+                    case "KeyS":
+                    case "ArrowDown":
+                        keyboardBackward = true;
+                        break;
+
+                    case "KeyA":
+                    case "ArrowLeft":
+                        keyboardLeft = true;
+                        break;
+
+                    case "KeyD":
+                    case "ArrowRight":
+                        keyboardRight = true;
+                        break;
+
+                    case "ShiftLeft":
+                    case "ShiftRight":
+                        isRunning = true;
+                        break;
+
+                    case "Space":
+                        event.preventDefault();
+                        jump();
+                        break;
+
+                    case "KeyE":
+                        interact();
+                        break;
+
+                    case "Escape":
+                        toggleMenu();
+                        break;
+                }
             }
-        });
+        );
 
-        gameUI.classList.remove("hidden");
+        window.addEventListener(
+            "keyup",
+            (event) => {
+                switch (event.code) {
+                    case "KeyW":
+                    case "ArrowUp":
+                        keyboardForward = false;
+                        break;
 
-        paused = false;
+                    case "KeyS":
+                    case "ArrowDown":
+                        keyboardBackward = false;
+                        break;
+
+                    case "KeyA":
+                    case "ArrowLeft":
+                        keyboardLeft = false;
+                        break;
+
+                    case "KeyD":
+                    case "ArrowRight":
+                        keyboardRight = false;
+                        break;
+
+                    case "ShiftLeft":
+                    case "ShiftRight":
+                        isRunning = false;
+                        break;
+                }
+            }
+        );
+
+        setupJoystick();
+        setupFreeLook();
+        setupActionButtons();
     }
 
     /* =====================================================
-       ACCOUNT
+       31. JOYSTICK
        ===================================================== */
 
-    function loadAccount() {
+    function setupJoystick() {
+        if (!joystick) return;
 
-        try {
-            return JSON.parse(
-                localStorage.getItem(
-                    "abssMapAccount"
-                ) || "null"
+        const start = (event) => {
+            event.preventDefault();
+
+            const touch =
+                event.touches
+                    ? event.touches[0]
+                    : event;
+
+            updateJoystick(
+                touch.clientX,
+                touch.clientY
             );
-        } catch (error) {
-            return null;
-        }
-    }
+        };
 
-    function saveAccount(account) {
+        const move = (event) => {
+            event.preventDefault();
 
-        localStorage.setItem(
-            "abssMapAccount",
-            JSON.stringify(account)
-        );
-    }
+            const touch =
+                event.touches
+                    ? event.touches[0]
+                    : event;
 
-    function selectGender(gender) {
-
-        selectedGender = gender;
-
-        maleButton.style.opacity =
-            gender === "male"
-                ? "1"
-                : "0.55";
-
-        femaleButton.style.opacity =
-            gender === "female"
-                ? "1"
-                : "0.55";
-    }
-
-    function handleCreateAccount() {
-
-        const name =
-            playerNameInput.value.trim();
-
-        const password =
-            playerPasswordInput.value;
-
-        if (
-            !name ||
-            password.length < 4
-        ) {
-
-            alert(
-                "Enter your name and a password of at least 4 characters."
+            updateJoystick(
+                touch.clientX,
+                touch.clientY
             );
+        };
 
-            return;
-        }
+        const end = (event) => {
+            event.preventDefault();
 
-        saveAccount({
-            name: name,
-            password: password,
-            gender: selectedGender,
-            photoName: ""
-        });
+            joystickX = 0;
+            joystickY = 0;
 
-        savedPlayerName.textContent =
-            "Account created for " +
-            name;
+            if (joystickKnob) {
+                joystickKnob.style.transform =
+                    "translate(-50%, -50%)";
+            }
+        };
 
-        characterSetupScreen.classList.remove(
-            "hidden"
+        joystick.addEventListener(
+            "touchstart",
+            start,
+            { passive: false }
         );
 
-        accountScreen.classList.add(
-            "hidden"
+        joystick.addEventListener(
+            "touchmove",
+            move,
+            { passive: false }
         );
-    }
 
-    function handleCharacterCreate() {
+        joystick.addEventListener(
+            "touchend",
+            end,
+            { passive: false }
+        );
 
-        const account =
-            loadAccount();
+        joystick.addEventListener(
+            "mousedown",
+            start
+        );
 
-        if (!account) return;
+        window.addEventListener(
+            "mousemove",
+            (event) => {
+                if (
+                    event.buttons === 1
+                ) {
+                    updateJoystick(
+                        event.clientX,
+                        event.clientY
+                    );
+                }
+            }
+        );
 
-        account.gender =
-            selectedGender;
-
-        account.photoName =
-            facePhoto.files.length
-                ? facePhoto.files[0].name
-                : "";
-
-        saveAccount(account);
-
-        playerNameDisplayElement.textContent =
-            account.name;
-
-        startGameUI();
-    }
-
-    function handleLogin() {
-
-        const account =
-            loadAccount();
-
-        if (!account) {
-
-            loginError.textContent =
-                "No account found. Create an account first.";
-
-            return;
-        }
-
-        if (
-            loginPasswordInput.value !==
-            account.password
-        ) {
-
-            loginError.textContent =
-                "Incorrect password.";
-
-            return;
-        }
-
-        playerNameDisplayElement.textContent =
-            account.name;
-
-        startGameUI();
-    }
-
-    /* =====================================================
-       JOYSTICK
-       ===================================================== */
-
-    function resetJoystick() {
-
-        joystickX = 0;
-        joystickY = 0;
-
-        joystickStick.style.transform =
-            "translate(-50%, -50%)";
+        window.addEventListener(
+            "mouseup",
+            end
+        );
     }
 
     function updateJoystick(
         clientX,
         clientY
     ) {
-
         const rect =
-            joystickBase.getBoundingClientRect();
+            joystick.getBoundingClientRect();
 
-        const radius =
-            rect.width * 0.38;
+        const centerX =
+            rect.left +
+            rect.width / 2;
+
+        const centerY =
+            rect.top +
+            rect.height / 2;
 
         let dx =
-            clientX -
-            (rect.left +
-                rect.width / 2);
+            clientX - centerX;
 
         let dy =
-            clientY -
-            (rect.top +
-                rect.height / 2);
+            clientY - centerY;
 
-        const length =
-            Math.hypot(dx, dy);
+        const radius =
+            rect.width / 2;
 
-        if (length > radius) {
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
 
+        if (distance > radius) {
             dx =
-                (dx / length) *
+                dx /
+                distance *
                 radius;
 
             dy =
-                (dy / length) *
+                dy /
+                distance *
                 radius;
         }
 
@@ -1320,438 +1883,523 @@
         joystickY =
             dy / radius;
 
-        joystickStick.style.transform =
-            "translate(calc(-50% + " +
-            dx +
-            "px), calc(-50% + " +
-            dy +
-            "px))";
-    }
-
-    /* =====================================================
-       TRUE 360° FREE LOOK
-       ===================================================== */
-
-    function startLook(
-        clientX,
-        clientY,
-        pointerId
-    ) {
-
-        lookPointerId =
-            pointerId;
-
-        lookLastX =
-            clientX;
-
-        lookLastY =
-            clientY;
-    }
-
-    function moveLook(
-        clientX,
-        clientY
-    ) {
-
-        if (
-            lookPointerId === null
-        ) {
-            return;
-        }
-
-        const sensitivity =
-            Number(
-                cameraSensitivity.value || 1
-            ) * 0.006;
-
-        const dx =
-            clientX - lookLastX;
-
-        const dy =
-            clientY - lookLastY;
-
-        lookLastX =
-            clientX;
-
-        lookLastY =
-            clientY;
-
-        /*
-           TRUE 360° HORIZONTAL LOOK
-
-           NO yaw clamp.
-           Player can continuously rotate
-           left/right without any limit.
-        */
-
-        cameraYaw +=
-            dx * sensitivity;
-
-        /*
-           Vertical look:
-           almost straight down/up.
-        */
-
-        cameraPitch -=
-            dy * sensitivity;
-
-        cameraPitch =
-            THREE.MathUtils.clamp(
-                cameraPitch,
-                -Math.PI / 2 + 0.04,
-                Math.PI / 2 - 0.04
-            );
-    }
-
-    function stopLook(pointerId) {
-
-        if (
-            lookPointerId === pointerId
-        ) {
-            lookPointerId = null;
+        if (joystickKnob) {
+            joystickKnob.style.transform =
+                `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
         }
     }
 
     /* =====================================================
-       COLLISION
+       32. FREE LOOK
        ===================================================== */
 
-    function isBlocked(
-        nextX,
-        nextZ
-    ) {
+    function setupFreeLook() {
+        const lookArea =
+            $("lookArea");
 
-        const radius = 0.55;
+        if (!lookArea) return;
 
-        for (
-            let i = 0;
-            i < colliders.length;
-            i++
-        ) {
+        lookArea.addEventListener(
+            "pointerdown",
+            (event) => {
+                lookPointerActive = true;
 
-            const c =
-                colliders[i];
+                lastLookX =
+                    event.clientX;
 
-            if (
-                nextX + radius > c.minX &&
-                nextX - radius < c.maxX &&
-                nextZ + radius > c.minZ &&
-                nextZ - radius < c.maxZ
-            ) {
-                return true;
+                lastLookY =
+                    event.clientY;
+
+                lookArea.setPointerCapture(
+                    event.pointerId
+                );
             }
-        }
+        );
 
-        return false;
+        lookArea.addEventListener(
+            "pointermove",
+            (event) => {
+                if (!lookPointerActive) {
+                    return;
+                }
+
+                const dx =
+                    event.clientX -
+                    lastLookX;
+
+                const dy =
+                    event.clientY -
+                    lastLookY;
+
+                lastLookX =
+                    event.clientX;
+
+                lastLookY =
+                    event.clientY;
+
+                cameraYaw -=
+                    dx *
+                    LOOK_SENSITIVITY *
+                    2.2;
+
+                cameraPitch -=
+                    dy *
+                    LOOK_SENSITIVITY *
+                    2.2;
+
+                cameraPitch =
+                    THREE.MathUtils.clamp(
+                        cameraPitch,
+                        -1.45,
+                        1.45
+                    );
+            }
+        );
+
+        lookArea.addEventListener(
+            "pointerup",
+            (event) => {
+                lookPointerActive = false;
+
+                try {
+                    lookArea.releasePointerCapture(
+                        event.pointerId
+                    );
+                } catch (_) {}
+            }
+        );
+
+        lookArea.addEventListener(
+            "pointercancel",
+            () => {
+                lookPointerActive = false;
+            }
+        );
     }
 
     /* =====================================================
-       PLAYER UPDATE
+       33. ACTION BUTTONS
        ===================================================== */
 
-    function updatePlayer(dt) {
+    function setupActionButtons() {
+        if (jumpButton) {
+            jumpButton.addEventListener(
+                "click",
+                jump
+            );
 
+            jumpButton.addEventListener(
+                "touchstart",
+                (event) => {
+                    event.preventDefault();
+                    jump();
+                },
+                { passive: false }
+            );
+        }
+
+        if (runButton) {
+            const runStart = (event) => {
+                event.preventDefault();
+                isRunning = true;
+            };
+
+            const runEnd = (event) => {
+                event.preventDefault();
+                isRunning = false;
+            };
+
+            runButton.addEventListener(
+                "pointerdown",
+                runStart
+            );
+
+            runButton.addEventListener(
+                "pointerup",
+                runEnd
+            );
+
+            runButton.addEventListener(
+                "pointercancel",
+                runEnd
+            );
+
+            runButton.addEventListener(
+                "pointerleave",
+                runEnd
+            );
+        }
+
+        if (interactButton) {
+            interactButton.addEventListener(
+                "click",
+                interact
+            );
+        }
+    }
+
+    /* =====================================================
+       34. JUMP
+       ===================================================== */
+
+    function jump() {
         if (
             !player ||
-            paused
+            !playerGrounded ||
+            gamePaused
         ) {
             return;
         }
 
-        let forward = 0;
-        let strafe = 0;
+        playerVelocityY =
+            JUMP_FORCE;
 
-        if (
-            keys.KeyW ||
-            keys.ArrowUp
-        ) {
-            forward += 1;
+        playerGrounded =
+            false;
+
+        isJumping = true;
+    }
+
+    /* =====================================================
+       35. MOVEMENT
+       ===================================================== */
+
+    function updatePlayer(delta) {
+        if (!player || gamePaused) {
+            return;
         }
 
-        if (
-            keys.KeyS ||
-            keys.ArrowDown
-        ) {
-            forward -= 1;
-        }
+        let forward =
+            keyboardForward;
 
-        if (
-            keys.KeyA ||
-            keys.ArrowLeft
-        ) {
-            strafe -= 1;
-        }
+        let backward =
+            keyboardBackward;
 
-        if (
-            keys.KeyD ||
-            keys.ArrowRight
-        ) {
-            strafe += 1;
-        }
+        let left =
+            keyboardLeft;
 
-        forward += -joystickY;
-        strafe += joystickX;
+        let right =
+            keyboardRight;
 
-        const inputLength =
-            Math.hypot(
-                forward,
-                strafe
+        let moveForward =
+            (forward ? 1 : 0) -
+            (backward ? 1 : 0);
+
+        let moveSide =
+            (right ? 1 : 0) -
+            (left ? 1 : 0);
+
+        moveForward +=
+            -joystickY;
+
+        moveSide +=
+            joystickX;
+
+        const length =
+            Math.sqrt(
+                moveForward *
+                    moveForward +
+                moveSide *
+                    moveSide
             );
 
-        if (inputLength > 1) {
-
-            forward /=
-                inputLength;
-
-            strafe /=
-                inputLength;
+        if (length > 1) {
+            moveForward /= length;
+            moveSide /= length;
         }
 
         const moving =
-            inputLength > 0.08;
-
-        const running =
-            isRunning ||
-            touchRun ||
-            keys.ShiftLeft ||
-            keys.ShiftRight;
-
-        const speed =
-            running
-                ? 13
-                : 6.5;
+            Math.abs(moveForward) > 0.01 ||
+            Math.abs(moveSide) > 0.01;
 
         if (moving) {
-
             const sin =
                 Math.sin(cameraYaw);
 
             const cos =
                 Math.cos(cameraYaw);
 
-            /*
-               Movement follows camera direction.
-            */
+            const directionX =
+                moveSide * cos +
+                moveForward * sin;
 
-            const moveX =
-                strafe * cos +
-                forward * sin;
+            const directionZ =
+                moveSide * sin -
+                moveForward * cos;
 
-            const moveZ =
-                strafe * -sin +
-                forward * cos;
+            const speed =
+                isRunning
+                    ? RUN_SPEED
+                    : PLAYER_SPEED;
 
-            const nextX =
-                player.position.x +
-                moveX * speed * dt;
+            const oldX =
+                player.position.x;
 
-            const nextZ =
-                player.position.z +
-                moveZ * speed * dt;
+            const oldZ =
+                player.position.z;
+
+            player.position.x +=
+                directionX *
+                speed *
+                delta;
+
+            player.position.z +=
+                directionZ *
+                speed *
+                delta;
 
             if (
-                !isBlocked(
-                    nextX,
+                isInsideBuilding(
+                    player.position.x,
                     player.position.z
                 )
             ) {
                 player.position.x =
-                    nextX;
-            }
+                    oldX;
 
-            if (
-                !isBlocked(
-                    player.position.x,
-                    nextZ
-                )
-            ) {
                 player.position.z =
-                    nextZ;
+                    oldZ;
             }
 
-            /*
-               Character faces movement direction.
-            */
-
-            const faceAngle =
+            const targetRotation =
                 Math.atan2(
-                    moveX,
-                    moveZ
+                    directionX,
+                    directionZ
                 );
 
             player.rotation.y =
-                THREE.MathUtils.lerp(
+                smoothAngle(
                     player.rotation.y,
-                    faceAngle,
+                    targetRotation,
                     Math.min(
                         1,
-                        dt * 12
+                        delta * 10
                     )
                 );
 
-            /* Walking / running animation */
+            animatePlayer(
+                delta,
+                speed
+            );
+        } else {
+            resetPlayerAnimation(delta);
+        }
 
-            const animationSpeed =
-                running
-                    ? 15
-                    : 9;
+        /* Gravity */
 
-            const swingAmount =
-                running
-                    ? 0.65
-                    : 0.42;
+        if (!playerGrounded) {
+            playerVelocityY -=
+                GRAVITY * delta;
 
-            walkCycle +=
-                dt *
-                animationSpeed;
+            player.position.y +=
+                playerVelocityY *
+                delta;
 
-            const swing =
-                Math.sin(
-                    walkCycle
-                ) *
-                swingAmount;
+            if (
+                player.position.y <= 0
+            ) {
+                player.position.y = 0;
+                playerVelocityY = 0;
+                playerGrounded = true;
+                isJumping = false;
+            }
+        }
 
+        clampPlayerToWorld();
+    }
+
+    function smoothAngle(
+        current,
+        target,
+        amount
+    ) {
+        let difference =
+            target - current;
+
+        while (
+            difference > Math.PI
+        ) {
+            difference -=
+                Math.PI * 2;
+        }
+
+        while (
+            difference < -Math.PI
+        ) {
+            difference +=
+                Math.PI * 2;
+        }
+
+        return current +
+            difference * amount;
+    }
+
+    /* =====================================================
+       36. PLAYER ANIMATION
+       ===================================================== */
+
+    let walkTime = 0;
+
+    function animatePlayer(
+        delta,
+        speed
+    ) {
+        walkTime +=
+            delta *
+            speed *
+            2.2;
+
+        const amount =
+            Math.min(
+                0.7,
+                speed / 6
+            );
+
+        const swing =
+            Math.sin(walkTime) *
+            amount;
+
+        if (leftLeg) {
             leftLeg.rotation.x =
                 swing;
+        }
 
+        if (rightLeg) {
             rightLeg.rotation.x =
                 -swing;
+        }
 
+        if (leftArm) {
             leftArm.rotation.x =
-                -swing * 0.65;
+                -swing * 0.7;
+        }
 
+        if (rightArm) {
             rightArm.rotation.x =
-                swing * 0.65;
+                swing * 0.7;
+        }
 
-        } else {
+        if (playerBody) {
+            playerBody.position.y =
+                1.55 +
+                Math.abs(
+                    Math.sin(
+                        walkTime * 2
+                    )
+                ) *
+                0.025;
+        }
+    }
 
+    function resetPlayerAnimation(
+        delta
+    ) {
+        const amount =
+            Math.min(
+                1,
+                delta * 10
+            );
+
+        if (leftLeg) {
             leftLeg.rotation.x =
                 THREE.MathUtils.lerp(
                     leftLeg.rotation.x,
                     0,
-                    Math.min(
-                        1,
-                        dt * 10
-                    )
+                    amount
                 );
+        }
 
+        if (rightLeg) {
             rightLeg.rotation.x =
                 THREE.MathUtils.lerp(
                     rightLeg.rotation.x,
                     0,
-                    Math.min(
-                        1,
-                        dt * 10
-                    )
+                    amount
                 );
+        }
 
+        if (leftArm) {
             leftArm.rotation.x =
                 THREE.MathUtils.lerp(
                     leftArm.rotation.x,
                     0,
-                    Math.min(
-                        1,
-                        dt * 10
-                    )
+                    amount
                 );
+        }
 
+        if (rightArm) {
             rightArm.rotation.x =
                 THREE.MathUtils.lerp(
                     rightArm.rotation.x,
                     0,
-                    Math.min(
-                        1,
-                        dt * 10
-                    )
+                    amount
                 );
-        }
-
-        /* Jump */
-
-        if (
-            (
-                keys.Space ||
-                jumpButton.dataset.pressed === "true"
-            ) &&
-            isGrounded
-        ) {
-
-            verticalVelocity = 9.5;
-
-            isGrounded = false;
-
-            jumpButton.dataset.pressed =
-                "false";
-        }
-
-        verticalVelocity -=
-            24 * dt;
-
-        player.position.y +=
-            verticalVelocity * dt;
-
-        if (
-            player.position.y <= 0
-        ) {
-
-            player.position.y = 0;
-
-            verticalVelocity = 0;
-
-            isGrounded = true;
         }
     }
 
     /* =====================================================
-       CAMERA
+       37. CAMERA
        ===================================================== */
 
-    function updateCamera(dt) {
+    function updateCamera(delta) {
+        if (!camera || !player) {
+            return;
+        }
 
-        if (!player) return;
+        const horizontalDistance =
+            cameraDistance *
+            Math.cos(cameraPitch);
 
-        const horizontal =
-            Math.cos(cameraPitch) *
-            cameraDistance;
-
-        const vertical =
-            Math.sin(cameraPitch) *
-            cameraDistance;
+        const verticalDistance =
+            cameraDistance *
+            Math.sin(cameraPitch);
 
         const targetX =
-            player.position.x +
+            player.position.x -
             Math.sin(cameraYaw) *
-            horizontal;
+            horizontalDistance;
 
         const targetZ =
-            player.position.z +
+            player.position.z -
             Math.cos(cameraYaw) *
-            horizontal;
+            horizontalDistance;
 
         const targetY =
             player.position.y +
-            cameraTargetHeight +
-            vertical;
+            cameraHeight +
+            verticalDistance;
 
-        tmpVec.set(
-            targetX,
-            targetY,
-            targetZ
-        );
-
-        camera.position.lerp(
-            tmpVec,
+        const smooth =
             Math.min(
                 1,
-                dt * 10
-            )
-        );
+                delta * 8
+            );
+
+        camera.position.x =
+            THREE.MathUtils.lerp(
+                camera.position.x,
+                targetX,
+                smooth
+            );
+
+        camera.position.y =
+            THREE.MathUtils.lerp(
+                camera.position.y,
+                targetY,
+                smooth
+            );
+
+        camera.position.z =
+            THREE.MathUtils.lerp(
+                camera.position.z,
+                targetZ,
+                smooth
+            );
 
         const lookTarget =
             new THREE.Vector3(
                 player.position.x,
-                player.position.y +
-                    cameraTargetHeight,
+                player.position.y + 1.5,
                 player.position.z
             );
 
@@ -1761,164 +2409,324 @@
     }
 
     /* =====================================================
-       GATE
+       38. GATE ANIMATION
        ===================================================== */
 
-    function updateGate(dt) {
-
+    function updateGate() {
         if (
-            !doors.length ||
+            !leftGate ||
+            !rightGate ||
             !player
         ) {
             return;
         }
 
-        const gate =
-            doors[0];
-
         const distance =
             Math.hypot(
                 player.position.x,
-                player.position.z - 106
+                player.position.z - 82
             );
 
-        const target =
-            distance < 16
-                ? 1
-                : 0;
+        const near =
+            distance < 18;
 
-        gate.progress =
+        const targetLeft =
+            near ? -8 : -4;
+
+        const targetRight =
+            near ? 8 : 4;
+
+        leftGate.position.x =
             THREE.MathUtils.lerp(
-                gate.progress,
-                target,
-                Math.min(
-                    1,
-                    dt * 3
-                )
+                leftGate.position.x,
+                targetLeft,
+                0.05
             );
 
-        gate.left.position.x =
+        rightGate.position.x =
             THREE.MathUtils.lerp(
-                gate.closedLeft,
-                gate.openLeft,
-                gate.progress
-            );
-
-        gate.right.position.x =
-            THREE.MathUtils.lerp(
-                gate.closedRight,
-                gate.openRight,
-                gate.progress
+                rightGate.position.x,
+                targetRight,
+                0.05
             );
     }
 
     /* =====================================================
-       ENVIRONMENT
+       39. INTERACTION
        ===================================================== */
 
-    function updateEnvironment(time) {
+    function updateInteraction() {
+        if (
+            !player ||
+            !interactionMessage
+        ) {
+            return;
+        }
 
-        animatedTrees.forEach(
-            function (tree) {
+        const px =
+            player.position.x;
 
-                tree.crown.rotation.z =
-                    Math.sin(
-                        time * 0.8 +
-                        tree.phase
-                    ) * 0.015;
-            }
+        const pz =
+            player.position.z;
+
+        const gateDistance =
+            Math.hypot(
+                px,
+                pz - 82
+            );
+
+        if (gateDistance < 12) {
+            currentInteraction =
+                "gate";
+
+            showInteraction(
+                "Press E / INTERACT to enter ABSS campus"
+            );
+
+            return;
+        }
+
+        const receptionDistance =
+            Math.hypot(
+                px,
+                pz + 32
+            );
+
+        if (
+            receptionDistance < 18
+        ) {
+            currentInteraction =
+                "reception";
+
+            showInteraction(
+                "Reception — Press E / INTERACT"
+            );
+
+            return;
+        }
+
+        currentInteraction = null;
+
+        hideElement(
+            interactionMessage
         );
     }
 
-    /* =====================================================
-       MISSION
-       ===================================================== */
+    function showInteraction(text) {
+        if (!interactionMessage) {
+            return;
+        }
 
-    function updateMission() {
+        interactionMessage.textContent =
+            text;
 
-        if (!player) return;
+        showElement(
+            interactionMessage
+        );
+    }
 
-        const targets = {
+    function interact() {
+        if (
+            gamePaused ||
+            !currentInteraction
+        ) {
+            return;
+        }
 
-            "Main Gate":
-                new THREE.Vector3(
-                    0,
-                    0,
-                    106
-                ),
-
-            "Reception":
-                new THREE.Vector3(
-                    0,
-                    0,
-                    -46
-                ),
-
-            "Teachers' Office":
-                new THREE.Vector3(
-                    -8,
-                    0,
-                    -46
-                ),
-
-            "Chemistry Lab":
-                new THREE.Vector3(
-                    12,
-                    0,
-                    -15
-                ),
-
-            "Physics Lab":
-                new THREE.Vector3(
-                    -12,
-                    0,
-                    -15
-                ),
-
-            "Sports Ground":
-                new THREE.Vector3(
-                    95,
-                    0,
-                    0
-                ),
-
-            "CSA Boys Hostel":
-                new THREE.Vector3(
-                    -68,
-                    0,
-                    53
-                ),
-
-            "Girls Hostel":
-                new THREE.Vector3(
-                    68,
-                    0,
-                    53
-                )
-        };
-
-        const target =
-            targets[currentMission] ||
-            targets["Main Gate"];
-
-        const distance =
-            player.position.distanceTo(
-                target
+        if (
+            currentInteraction ===
+            "gate"
+        ) {
+            showDialogue(
+                "Welcome to ABSS Institute of Technology!"
             );
 
-        missionText.textContent =
-            currentMission;
+            completeMission(
+                "mainGate"
+            );
+        }
 
-        destinationDistance.textContent =
-            Math.round(distance) +
-            " m";
+        if (
+            currentInteraction ===
+            "reception"
+        ) {
+            showDialogue(
+                "Namaste Mam"
+            );
+
+            setTimeout(
+                () => {
+                    showDialogue(
+                        "Namaste! Welcome to ABSSIT."
+                    );
+                },
+                900
+            );
+
+            completeMission(
+                "reception"
+            );
+        }
+    }
+
+    /* =====================================================
+       40. DIALOGUE
+       ===================================================== */
+
+    let dialogueTimer = null;
+
+    function showDialogue(text) {
+        if (!dialogueBox) return;
+
+        if (dialogueText) {
+            dialogueText.textContent =
+                text;
+        }
+
+        showElement(dialogueBox);
+
+        if (dialogueTimer) {
+            clearTimeout(
+                dialogueTimer
+            );
+        }
+
+        dialogueTimer =
+            setTimeout(
+                () => {
+                    hideElement(
+                        dialogueBox
+                    );
+                },
+                3000
+            );
+    }
+
+    /* =====================================================
+       41. MISSIONS
+       ===================================================== */
+
+    const missions = [
+        {
+            id: "mainGate",
+            title: "Visit Main Gate",
+            target: new THREE.Vector3(
+                0,
+                0,
+                75
+            )
+        },
+        {
+            id: "reception",
+            title: "Visit Reception",
+            target: new THREE.Vector3(
+                0,
+                0,
+                -30
+            )
+        },
+        {
+            id: "college",
+            title: "Explore Main College",
+            target: new THREE.Vector3(
+                0,
+                0,
+                -32
+            )
+        },
+        {
+            id: "csa",
+            title: "Visit CSA Boys Hostel",
+            target: new THREE.Vector3(
+                -52,
+                0,
+                42
+            )
+        },
+        {
+            id: "girls",
+            title: "Visit Girls Hostel",
+            target: new THREE.Vector3(
+                52,
+                0,
+                42
+            )
+        },
+        {
+            id: "sports",
+            title: "Visit Sports Ground",
+            target: new THREE.Vector3(
+                55,
+                0,
+                -5
+            )
+        }
+    ];
+
+    const completedMissions =
+        {};
+
+    function completeMission(id) {
+        completedMissions[id] =
+            true;
+
+        updateMissionHUD();
+    }
+
+    function updateMissionHUD() {
+        if (!missionText) return;
+
+        const next =
+            missions.find(
+                (mission) =>
+                    !completedMissions[
+                        mission.id
+                    ]
+            );
+
+        if (!next) {
+            missionText.textContent =
+                "ABSS Campus Explorer — COMPLETE!";
+            return;
+        }
+
+        missionText.textContent =
+            next.title;
+    }
+
+    function updateNavigation() {
+        if (
+            !navigationArrow ||
+            !player
+        ) {
+            return;
+        }
+
+        const next =
+            missions.find(
+                (mission) =>
+                    !completedMissions[
+                        mission.id
+                    ]
+            );
+
+        if (!next) {
+            hideElement(
+                navigationArrow
+            );
+            return;
+        }
+
+        showElement(
+            navigationArrow
+        );
 
         const dx =
-            target.x -
+            next.target.x -
             player.position.x;
 
         const dz =
-            target.z -
+            next.target.z -
             player.position.z;
 
         const targetAngle =
@@ -1927,598 +2735,409 @@
                 dz
             );
 
-        let relative =
+        const difference =
             targetAngle -
-            cameraYaw;
-
-        relative =
-            Math.atan2(
-                Math.sin(relative),
-                Math.cos(relative)
-            );
+            player.rotation.y;
 
         navigationArrow.style.transform =
-            "translate(-50%, -50%) rotate(" +
-            relative +
-            "rad)";
+            `rotate(${difference}rad)`;
     }
 
     /* =====================================================
-       INTERACTION
+       42. MENU
        ===================================================== */
 
-    function checkInteraction() {
+    function toggleMenu() {
+        if (!menuScreen) return;
 
-        if (!player) return;
-
-        const possible = [
-
-            {
-                name: "Main Gate",
-                position:
-                    new THREE.Vector3(
-                        0,
-                        0,
-                        106
-                    ),
-                action:
-                    "Open main gate"
-            },
-
-            {
-                name: "Reception",
-                position:
-                    new THREE.Vector3(
-                        0,
-                        0,
-                        -46
-                    ),
-                action:
-                    "Enter reception"
-            },
-
-            {
-                name:
-                    "CSA Boys Hostel",
-                position:
-                    new THREE.Vector3(
-                        -68,
-                        0,
-                        53
-                    ),
-                action:
-                    "Enter CSA Boys Hostel"
-            },
-
-            {
-                name:
-                    "Girls Hostel",
-                position:
-                    new THREE.Vector3(
-                        68,
-                        0,
-                        53
-                    ),
-                action:
-                    "Enter Girls Hostel"
-            }
-        ];
-
-        interactTarget = null;
-
-        let best =
-            Infinity;
-
-        possible.forEach(
-            function (item) {
-
-                const d =
-                    player.position.distanceTo(
-                        item.position
-                    );
-
-                if (
-                    d < 8 &&
-                    d < best
-                ) {
-
-                    best = d;
-
-                    interactTarget =
-                        item;
-                }
-            }
-        );
-
-        if (interactTarget) {
-
-            interactionText.textContent =
-                interactTarget.action;
-
-            interactionMessage.classList.remove(
+        if (
+            menuScreen.classList.contains(
                 "hidden"
-            );
-
-            interactButton.style.display =
-                "block";
-
+            )
+        ) {
+            showElement(menuScreen);
+            gamePaused = true;
         } else {
-
-            interactionMessage.classList.add(
-                "hidden"
-            );
-
-            interactButton.style.display =
-                "none";
+            hideElement(menuScreen);
+            gamePaused = false;
         }
     }
 
-    function interact() {
+    /* =====================================================
+       43. MAP
+       ===================================================== */
 
-        if (!interactTarget) {
+    function openMap() {
+        hideElement(menuScreen);
+        showElement(mapScreen);
+        gamePaused = true;
+    }
+
+    function closeMap() {
+        hideElement(mapScreen);
+        gamePaused = false;
+    }
+
+    /* =====================================================
+       44. MISSIONS SCREEN
+       ===================================================== */
+
+    function openMissions() {
+        hideElement(menuScreen);
+        showElement(missionsScreen);
+        gamePaused = true;
+
+        const list =
+            $("missionList");
+
+        if (!list) return;
+
+        list.innerHTML = "";
+
+        missions.forEach(
+            (mission) => {
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                const completed =
+                    !!completedMissions[
+                        mission.id
+                    ];
+
+                item.textContent =
+                    completed
+                        ? "✓ " + mission.title
+                        : "○ " + mission.title;
+
+                item.className =
+                    completed
+                        ? "mission-complete"
+                        : "mission-pending";
+
+                list.appendChild(item);
+            }
+        );
+    }
+
+    function closeMissions() {
+        hideElement(
+            missionsScreen
+        );
+
+        gamePaused = false;
+    }
+
+    /* =====================================================
+       45. SETTINGS
+       ===================================================== */
+
+    function openSettings() {
+        hideElement(menuScreen);
+        showElement(settingsScreen);
+        gamePaused = true;
+    }
+
+    function closeSettings() {
+        hideElement(settingsScreen);
+        gamePaused = false;
+    }
+
+    /* =====================================================
+       46. MENU BUTTON AUTO-CONNECTION
+       ===================================================== */
+
+    function connectButton(
+        id,
+        callback
+    ) {
+        const element = $(id);
+
+        if (!element) return;
+
+        element.addEventListener(
+            "click",
+            (event) => {
+                event.preventDefault();
+                callback();
+            }
+        );
+    }
+
+    connectButton(
+        "menuButton",
+        toggleMenu
+    );
+
+    connectButton(
+        "mapButton",
+        openMap
+    );
+
+    connectButton(
+        "missionsButton",
+        openMissions
+    );
+
+    connectButton(
+        "settingsButton",
+        openSettings
+    );
+
+    connectButton(
+        "closeMapButton",
+        closeMap
+    );
+
+    connectButton(
+        "closeMissionsButton",
+        closeMissions
+    );
+
+    connectButton(
+        "closeSettingsButton",
+        closeSettings
+    );
+
+    connectButton(
+        "resumeButton",
+        toggleMenu
+    );
+
+    connectButton(
+        "createAccountButton",
+        createAccount
+    );
+
+    connectButton(
+        "loginButton",
+        loginUser
+    );
+
+    connectButton(
+        "finishCharacterButton",
+        finishCharacterCreation
+    );
+
+    /* =====================================================
+       47. SETTINGS CONTROLS
+       ===================================================== */
+
+    connectButton(
+        "qualityLow",
+        () => setQuality("low")
+    );
+
+    connectButton(
+        "qualityMedium",
+        () => setQuality("medium")
+    );
+
+    connectButton(
+        "qualityHigh",
+        () => setQuality("high")
+    );
+
+    function setQuality(level) {
+        if (!renderer) return;
+
+        if (level === "low") {
+            renderer.setPixelRatio(1);
+        }
+
+        if (level === "medium") {
+            renderer.setPixelRatio(
+                Math.min(
+                    window.devicePixelRatio || 1,
+                    1.5
+                )
+            );
+        }
+
+        if (level === "high") {
+            renderer.setPixelRatio(
+                Math.min(
+                    window.devicePixelRatio || 1,
+                    2
+                )
+            );
+        }
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+
+    /* =====================================================
+       48. DAY / NIGHT
+       ===================================================== */
+
+    function updateDayNight(delta) {
+        dayTime +=
+            delta *
+            0.008;
+
+        if (dayTime > 1) {
+            dayTime = 0;
+        }
+
+        const angle =
+            dayTime *
+            Math.PI *
+            2;
+
+        const sunX =
+            Math.cos(angle) *
+            100;
+
+        const sunY =
+            Math.sin(angle) *
+            100;
+
+        sunLight.position.set(
+            sunX,
+            Math.max(15, sunY),
+            50
+        );
+
+        const daylight =
+            THREE.MathUtils.clamp(
+                Math.sin(angle) *
+                    0.5 +
+                    0.5,
+                0.15,
+                1
+            );
+
+        sunLight.intensity =
+            0.5 +
+            daylight * 1.7;
+
+        ambientLight.intensity =
+            0.5 +
+            daylight * 1.1;
+    }
+
+    /* =====================================================
+       49. TREES WIND
+       ===================================================== */
+
+    function updateEnvironment(time) {
+        trees.forEach(
+            (tree, index) => {
+                tree.rotation.z =
+                    Math.sin(
+                        time * 0.8 +
+                        index
+                    ) *
+                    0.015;
+
+                tree.rotation.x =
+                    Math.cos(
+                        time * 0.6 +
+                        index
+                    ) *
+                    0.01;
+            }
+        );
+    }
+
+    /* =====================================================
+       50. MINIMAP
+       ===================================================== */
+
+    function updateMinimap() {
+        const minimap =
+            $("minimap");
+
+        const playerMarker =
+            $("playerMarker");
+
+        if (
+            !minimap ||
+            !playerMarker ||
+            !player
+        ) {
             return;
         }
 
-        currentMission =
-            interactTarget.name;
+        const rect =
+            minimap.getBoundingClientRect();
+
+        const mapSize =
+            Math.min(
+                rect.width,
+                rect.height
+            );
+
+        const normalizedX =
+            (player.position.x +
+                WORLD_SIZE / 2) /
+            WORLD_SIZE;
+
+        const normalizedZ =
+            (player.position.z +
+                WORLD_SIZE / 2) /
+            WORLD_SIZE;
+
+        playerMarker.style.left =
+            `${normalizedX * 100}%`;
+
+        playerMarker.style.top =
+            `${normalizedZ * 100}%`;
     }
 
     /* =====================================================
-       MENU
+       51. RESIZE
        ===================================================== */
 
-    function openGameMenu() {
+    function onResize() {
+        if (!camera || !renderer) {
+            return;
+        }
 
-        paused = true;
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
 
-        gameMenu.classList.remove(
-            "hidden"
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
         );
     }
 
-    function closeGameMenu() {
-
-        gameMenu.classList.add(
-            "hidden"
-        );
-
-        paused = false;
-    }
-
     /* =====================================================
-       KEYBOARD
+       52. MAIN GAME LOOP
        ===================================================== */
 
-    window.addEventListener(
-        "keydown",
-        function (event) {
-
-            keys[event.code] = true;
-
-            if (
-                event.code === "Space"
-            ) {
-                event.preventDefault();
-            }
-
-            if (
-                event.code === "Escape"
-            ) {
-
-                if (
-                    gameMenu.classList.contains(
-                        "hidden"
-                    )
-                ) {
-                    openGameMenu();
-                } else {
-                    closeGameMenu();
-                }
-            }
-        }
-    );
-
-    window.addEventListener(
-        "keyup",
-        function (event) {
-
-            keys[event.code] = false;
-        }
-    );
-
-    /* =====================================================
-       FREE LOOK POINTER
-       ===================================================== */
-
-    lookArea.addEventListener(
-        "pointerdown",
-        function (event) {
-
-            if (
-                event.pointerType === "mouse" &&
-                event.button !== 0
-            ) {
-                return;
-            }
-
-            startLook(
-                event.clientX,
-                event.clientY,
-                event.pointerId
-            );
-
-            try {
-                lookArea.setPointerCapture(
-                    event.pointerId
-                );
-            } catch (error) {}
-        }
-    );
-
-    lookArea.addEventListener(
-        "pointermove",
-        function (event) {
-
-            moveLook(
-                event.clientX,
-                event.clientY
-            );
-        }
-    );
-
-    lookArea.addEventListener(
-        "pointerup",
-        function (event) {
-
-            stopLook(
-                event.pointerId
-            );
-        }
-    );
-
-    lookArea.addEventListener(
-        "pointercancel",
-        function (event) {
-
-            stopLook(
-                event.pointerId
-            );
-        }
-    );
-
-    /* =====================================================
-       JOYSTICK POINTER
-       ===================================================== */
-
-    joystickBase.addEventListener(
-        "pointerdown",
-        function (event) {
-
-            joystickPointerId =
-                event.pointerId;
-
-            try {
-                joystickBase.setPointerCapture(
-                    event.pointerId
-                );
-            } catch (error) {}
-
-            updateJoystick(
-                event.clientX,
-                event.clientY
-            );
-        }
-    );
-
-    joystickBase.addEventListener(
-        "pointermove",
-        function (event) {
-
-            if (
-                event.pointerId ===
-                joystickPointerId
-            ) {
-
-                updateJoystick(
-                    event.clientX,
-                    event.clientY
-                );
-            }
-        }
-    );
-
-    function releaseJoystick(
-        event
-    ) {
-
-        if (
-            event.pointerId ===
-            joystickPointerId
-        ) {
-
-            joystickPointerId =
-                null;
-
-            resetJoystick();
-        }
-    }
-
-    joystickBase.addEventListener(
-        "pointerup",
-        releaseJoystick
-    );
-
-    joystickBase.addEventListener(
-        "pointercancel",
-        releaseJoystick
-    );
-
-    /* =====================================================
-       ACTION BUTTONS
-       ===================================================== */
-
-    jumpButton.addEventListener(
-        "pointerdown",
-        function () {
-
-            jumpButton.dataset.pressed =
-                "true";
-        }
-    );
-
-    runButton.addEventListener(
-        "pointerdown",
-        function () {
-
-            touchRun = true;
-        }
-    );
-
-    runButton.addEventListener(
-        "pointerup",
-        function () {
-
-            touchRun = false;
-        }
-    );
-
-    runButton.addEventListener(
-        "pointercancel",
-        function () {
-
-            touchRun = false;
-        }
-    );
-
-    interactButton.addEventListener(
-        "click",
-        interact
-    );
-
-    menuButton.addEventListener(
-        "click",
-        openGameMenu
-    );
-
-    resumeButton.addEventListener(
-        "click",
-        closeGameMenu
-    );
-
-    /* =====================================================
-       SETTINGS
-       ===================================================== */
-
-    settingsButton.addEventListener(
-        "click",
-        function () {
-
-            gameMenu.classList.add(
-                "hidden"
-            );
-
-            settingsScreen.classList.remove(
-                "hidden"
-            );
-        }
-    );
-
-    closeSettingsButton.addEventListener(
-        "click",
-        function () {
-
-            settingsScreen.classList.add(
-                "hidden"
-            );
-
-            gameMenu.classList.remove(
-                "hidden"
-            );
-        }
-    );
-
-    /* =====================================================
-       MAP
-       ===================================================== */
-
-    mapButton.addEventListener(
-        "click",
-        function () {
-
-            paused = true;
-
-            mapScreen.classList.remove(
-                "hidden"
-            );
-        }
-    );
-
-    closeMapButton.addEventListener(
-        "click",
-        function () {
-
-            mapScreen.classList.add(
-                "hidden"
-            );
-
-            paused = false;
-        }
-    );
-
-    /* =====================================================
-       MISSIONS
-       ===================================================== */
-
-    missionButton.addEventListener(
-        "click",
-        function () {
-
-            paused = true;
-
-            missionsScreen.classList.remove(
-                "hidden"
-            );
-        }
-    );
-
-    closeMissionsButton.addEventListener(
-        "click",
-        function () {
-
-            missionsScreen.classList.add(
-                "hidden"
-            );
-
-            paused = false;
-        }
-    );
-
-    document
-        .querySelectorAll(
-            "#missionList li"
-        )
-        .forEach(
-            function (item) {
-
-                item.addEventListener(
-                    "click",
-                    function () {
-
-                        currentMission =
-                            item.textContent.trim();
-
-                        missionsScreen.classList.add(
-                            "hidden"
-                        );
-
-                        paused = false;
-                    }
-                );
-            }
-        );
-
-    /* =====================================================
-       LOGOUT
-       ===================================================== */
-
-    logoutButton.addEventListener(
-        "click",
-        function () {
-
-            gameMenu.classList.add(
-                "hidden"
-            );
-
-            loginScreen.classList.remove(
-                "hidden"
-            );
-
-            gameUI.classList.add(
-                "hidden"
-            );
-
-            paused = true;
-        }
-    );
-
-    /* =====================================================
-       ACCOUNT BUTTONS
-       ===================================================== */
-
-    createAccountButton.addEventListener(
-        "click",
-        handleCreateAccount
-    );
-
-    generateCharacterButton.addEventListener(
-        "click",
-        handleCharacterCreate
-    );
-
-    loginButton.addEventListener(
-        "click",
-        handleLogin
-    );
-
-    maleButton.addEventListener(
-        "click",
-        function () {
-            selectGender("male");
-        }
-    );
-
-    femaleButton.addEventListener(
-        "click",
-        function () {
-            selectGender("female");
-        }
-    );
-
-    /* =====================================================
-       RESIZE
-       ===================================================== */
-
-    window.addEventListener(
-        "resize",
-        function () {
-
-            camera.aspect =
-                window.innerWidth /
-                window.innerHeight;
-
-            camera.updateProjectionMatrix();
-
-            renderer.setSize(
-                window.innerWidth,
-                window.innerHeight
-            );
-        }
-    );
-
-    /* =====================================================
-       GAME LOOP
-       ===================================================== */
-
-    function animate(now) {
-
+    function animate() {
         requestAnimationFrame(
             animate
         );
 
-        const dt =
+        const delta =
             Math.min(
-                (now - lastTime) / 1000,
+                clock.getDelta(),
                 0.05
             );
 
-        lastTime = now;
+        const elapsed =
+            clock.elapsedTime;
 
-        updatePlayer(dt);
-        updateCamera(dt);
-        updateGate(dt);
-        updateEnvironment(now / 1000);
-        updateMission();
-        checkInteraction();
+        if (gameStarted) {
+            updatePlayer(delta);
+            updateCamera(delta);
+            updateGate();
+            updateInteraction();
+            updateNavigation();
+            updateMinimap();
+            updateDayNight(delta);
+            updateEnvironment(elapsed);
+        }
 
         renderer.render(
             scene,
@@ -2527,57 +3146,10 @@
     }
 
     /* =====================================================
-       START
+       53. INITIAL START
        ===================================================== */
 
-    buildWorld();
-
-    createPlayer();
-
-    selectGender("male");
-
-    const account =
-        loadAccount();
-
-    if (account) {
-
-        savedPlayerName.textContent =
-            account.name;
-
-        playerNameDisplay.textContent =
-            account.name;
-
-        showOnly(loginScreen);
-
-    } else {
-
-        showOnly(accountScreen);
-    }
-
-    if (loadingProgress) {
-        loadingProgress.style.width =
-            "100%";
-    }
-
-    setTimeout(
-        function () {
-
-            loadingScreen.classList.add(
-                "hidden"
-            );
-
-        },
-        500
-    );
-
-    camera.position.set(
-        0,
-        5,
-        100
-    );
-
-    animate(
-        performance.now()
-    );
+    initThree();
+    finishLoading();
 
 })();
