@@ -1,556 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  >
 
-    <title>ABSS Map | Krishna's ABSS Game</title>
+  <title>ABSS MAP</title>
 
-    <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- =========================
-         GAME CANVAS
-    ========================== -->
-    <canvas id="gameCanvas"></canvas>
+  <!-- Loading Screen -->
+  <div id="loading">
+    <div class="loader"></div>
+    <strong>ABSS MAP</strong>
+    <span>Loading ABSS Institute of Technology...</span>
+  </div>
 
 
-    <!-- =========================
-         LOADING SCREEN
-    ========================== -->
-    <div id="loadingScreen">
+  <!-- HUD -->
+  <div id="hud">
 
-        <div class="loadingBox">
-
-            <div class="gameLogo">
-                ABSS
-            </div>
-
-            <h1>ABSS MAP</h1>
-
-            <p>ABSS Institute of Technology</p>
-
-            <div class="loadingBar">
-                <div id="loadingProgress"></div>
-            </div>
-
-            <div id="loadingText">
-                Loading ABSS Map...
-            </div>
-
-        </div>
-
+    <div class="brand">
+      <strong>ABSS MAP</strong>
+      <small>ABSS Institute of Technology • Meerut</small>
     </div>
 
-
-    <!-- =========================
-         ACCOUNT SCREEN
-    ========================== -->
-    <section id="accountScreen" class="screen hidden">
-
-        <div class="panel">
-
-            <h1>ABSS MAP</h1>
-
-            <p class="subtitle">
-                Create your player profile
-            </p>
-
-            <input
-                id="playerName"
-                type="text"
-                placeholder="Enter your name"
-                maxlength="30"
-                autocomplete="off"
-            >
-
-            <input
-                id="playerPassword"
-                type="password"
-                placeholder="Create password"
-                maxlength="50"
-                autocomplete="new-password"
-            >
-
-            <button id="createAccountBtn">
-                CREATE PLAYER
-            </button>
-
-            <button id="existingPlayerBtn" class="secondaryBtn">
-                EXISTING PLAYER
-            </button>
-
-            <p id="accountMessage"></p>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         CHARACTER SETUP
-    ========================== -->
-    <section id="characterScreen" class="screen hidden">
-
-        <div class="panel">
-
-            <h1>CREATE CHARACTER</h1>
-
-            <p id="characterNameText">
-                Choose your character
-            </p>
-
-            <div class="photoBox">
-
-                <img
-                    id="photoPreview"
-                    src=""
-                    alt="Character photo preview"
-                >
-
-                <span id="photoPlaceholder">
-                    Add Photo
-                </span>
-
-            </div>
-
-            <input
-                id="facePhoto"
-                type="file"
-                accept="image/*"
-                hidden
-            >
-
-            <button id="photoButton">
-                UPLOAD PHOTO
-            </button>
-
-            <div class="genderButtons">
-
-                <button id="boyBtn">
-                    BOY
-                </button>
-
-                <button id="girlBtn">
-                    GIRL
-                </button>
-
-            </div>
-
-            <button id="startGameBtn">
-                ENTER ABSS MAP
-            </button>
-
-            <p id="characterMessage"></p>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         LOGIN SCREEN
-    ========================== -->
-    <section id="loginScreen" class="screen hidden">
-
-        <div class="panel">
-
-            <h1>WELCOME BACK</h1>
-
-            <p>Enter your password</p>
-
-            <input
-                id="loginPassword"
-                type="password"
-                placeholder="Password"
-                autocomplete="current-password"
-            >
-
-            <button id="loginBtn">
-                LOGIN
-            </button>
-
-            <button id="backToCreateBtn" class="secondaryBtn">
-                CREATE NEW PLAYER
-            </button>
-
-            <p id="loginMessage"></p>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         GAME HUD
-    ========================== -->
-    <div id="gameUI" class="hidden">
-
-        <!-- Top left -->
-        <div id="playerInfo">
-
-            <div id="playerNameDisplay">
-                Player
-            </div>
-
-            <div id="mapName">
-                ABSS MAP
-            </div>
-
-        </div>
-
-
-        <!-- Mission -->
-        <div id="missionHUD">
-
-            <div class="missionTitle">
-                CURRENT MISSION
-            </div>
-
-            <div id="missionText">
-                Explore ABSS Campus
-            </div>
-
-        </div>
-
-
-        <!-- Navigation -->
-        <div id="navigationArrow">
-            ↑
-        </div>
-
-
-        <!-- Minimap -->
-        <div id="minimap">
-
-            <div class="mapTitle">
-                ABSS MAP
-            </div>
-
-            <div id="mapPlayer">
-                ●
-            </div>
-
-            <div class="mapMarker collegeMarker">
-                C
-            </div>
-
-            <div class="mapMarker csaMarker">
-                B
-            </div>
-
-            <div class="mapMarker girlsMarker">
-                G
-            </div>
-
-            <div class="mapMarker sportsMarker">
-                S
-            </div>
-
-            <div class="mapMarker gateMarker">
-                M
-            </div>
-
-        </div>
-
-
-        <!-- Interaction -->
-        <div id="interactionMessage">
-            Press INTERACT
-        </div>
-
-
-        <!-- Dialogue -->
-        <div id="dialogueBox" class="hidden">
-
-            <div id="dialogueName">
-                ABSS
-            </div>
-
-            <div id="dialogueText">
-                Hello!
-            </div>
-
-            <button id="dialogueClose">
-                OK
-            </button>
-
-        </div>
-
-
-        <!-- =========================
-             MOBILE JOYSTICK
-        ========================== -->
-        <div id="joystickArea">
-
-            <div id="joystickBase">
-                <div id="joystickStick"></div>
-            </div>
-
-        </div>
-
-
-        <!-- =========================
-             FREE LOOK AREA
-        ========================== -->
-        <div id="lookArea"></div>
-
-
-        <!-- =========================
-             ACTION BUTTONS
-        ========================== -->
-        <div id="actionButtons">
-
-            <button id="jumpButton" class="actionButton">
-                JUMP
-            </button>
-
-            <button id="runButton" class="actionButton">
-                RUN
-            </button>
-
-            <button id="interactButton" class="actionButton">
-                INTERACT
-            </button>
-
-        </div>
-
-
-        <!-- =========================
-             MENU BUTTON
-        ========================== -->
-        <button id="menuButton">
-            ☰
-        </button>
-
+    <div id="lookHint">
+      Drag right side to look • E to interact
     </div>
 
-
-    <!-- =========================
-         GAME MENU
-    ========================== -->
-    <section id="menuScreen" class="overlayScreen hidden">
-
-        <div class="menuPanel">
-
-            <h2>ABSS MAP</h2>
-
-            <button id="resumeBtn">
-                RESUME
-            </button>
-
-            <button id="mapButton">
-                MAP
-            </button>
-
-            <button id="missionsButton">
-                MISSIONS
-            </button>
-
-            <button id="settingsButton">
-                SETTINGS
-            </button>
-
-            <button id="logoutButton" class="dangerBtn">
-                LOG OUT
-            </button>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         MAP SCREEN
-    ========================== -->
-    <section id="mapScreen" class="overlayScreen hidden">
-
-        <div class="fullPanel">
-
-            <button class="closePanel" id="closeMapBtn">
-                ✕
-            </button>
-
-            <h2>ABSS MAP</h2>
-
-            <div id="largeMap">
-
-                <div class="largeMapPlayer">
-                    PLAYER
-                </div>
-
-                <div class="largeMapLocation collegeLocation">
-                    ABSS COLLEGE
-                </div>
-
-                <div class="largeMapLocation csaLocation">
-                    CSA BOYS HOSTEL
-                </div>
-
-                <div class="largeMapLocation girlsLocation">
-                    GIRLS HOSTEL
-                </div>
-
-                <div class="largeMapLocation sportsLocation">
-                    SPORTS
-                </div>
-
-                <div class="largeMapLocation gateLocation">
-                    MAIN GATE
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         MISSIONS SCREEN
-    ========================== -->
-    <section id="missionsScreen" class="overlayScreen hidden">
-
-        <div class="fullPanel">
-
-            <button class="closePanel" id="closeMissionsBtn">
-                ✕
-            </button>
-
-            <h2>MISSIONS</h2>
-
-            <div id="missionList">
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit Main Gate
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit Reception
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit Teachers' Office
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Explore Classrooms
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit Chemistry Lab
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit Physics Lab
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit CSA Boys Hostel
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Visit Girls Hostel
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Explore Sports Area
-                </div>
-
-                <div class="missionItem">
-                    <span>☐</span>
-                    Explore Entire ABSS Campus
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         SETTINGS SCREEN
-    ========================== -->
-    <section id="settingsScreen" class="overlayScreen hidden">
-
-        <div class="fullPanel">
-
-            <button class="closePanel" id="closeSettingsBtn">
-                ✕
-            </button>
-
-            <h2>SETTINGS</h2>
-
-            <label class="settingRow">
-
-                <span>
-                    Graphics Quality
-                </span>
-
-                <select id="graphicsQuality">
-
-                    <option value="low">
-                        Low
-                    </option>
-
-                    <option value="medium" selected>
-                        Medium
-                    </option>
-
-                    <option value="high">
-                        High
-                    </option>
-
-                </select>
-
-            </label>
-
-            <label class="settingRow">
-
-                <span>
-                    Camera Sensitivity
-                </span>
-
-                <input
-                    id="cameraSensitivity"
-                    type="range"
-                    min="0.001"
-                    max="0.02"
-                    step="0.001"
-                    value="0.006"
-                >
-
-            </label>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         THREE.JS
-         MUST LOAD BEFORE game.js
-    ========================== -->
-
-    <script src="https://unpkg.com/three@0.180.0/build/three.min.js"></script>
-    
-    <script src="game.js"></script>
+  </div>
+
+
+  <!-- Mobile Joystick -->
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+
+
+  <!-- Jump -->
+  <button
+    id="jumpBtn"
+    class="roundBtn"
+    type="button"
+  >
+    JUMP
+  </button>
+
+
+  <!-- Run -->
+  <button
+    id="runBtn"
+    class="roundBtn runButton"
+    type="button"
+  >
+    RUN
+  </button>
+
+
+  <!-- Camera Sensitivity -->
+  <!-- Hidden because game.js supports it automatically -->
+  <input
+    id="cameraSensitivity"
+    type="range"
+    min="0.002"
+    max="0.015"
+    step="0.001"
+    value="0.006"
+    hidden
+  >
+
+
+  <!-- Right-side camera look area -->
+  <div id="lookArea"></div>
+
+
+  <!-- IMPORTANT:
+       Only game.js is loaded here.
+       game.js itself loads Three.js.
+  -->
+  <script src="game.js"></script>
 
 </body>
 </html>
