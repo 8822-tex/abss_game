@@ -1,11 +1,12 @@
 /* =========================================================
-   ABSS MAP — STYLE.CSS
+   ABSS MAP — style.css
+   Mobile-first game interface
    ========================================================= */
 
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -14,18 +15,20 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #07111c;
+    background: #050505;
     font-family: Arial, Helvetica, sans-serif;
     color: #ffffff;
-    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 body {
-    position: relative;
+    position: fixed;
+    inset: 0;
 }
 
 /* =========================================================
-   GAME CANVAS
+   CANVAS
    ========================================================= */
 
 #gameCanvas {
@@ -34,8 +37,8 @@ body {
     width: 100%;
     height: 100%;
     display: block;
-    z-index: 1;
-    outline: none;
+    touch-action: none;
+    background: #050505;
 }
 
 /* =========================================================
@@ -53,11 +56,9 @@ select {
 }
 
 button {
-    border: 0;
-    outline: none;
+    border: none;
     cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 button:active {
@@ -71,45 +72,57 @@ button:active {
 #loadingScreen {
     position: fixed;
     inset: 0;
-    z-index: 2000;
+    z-index: 1000;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
     background:
-        radial-gradient(
-            circle at center,
-            #24394d 0%,
-            #0d1b28 45%,
-            #050b11 100%
-        );
+        radial-gradient(circle at center, #252525 0%, #0c0c0c 55%, #000000 100%);
+}
 
+.loadingBox {
+    width: min(90%, 420px);
+    padding: 30px 24px;
     text-align: center;
 }
 
-#loadingContent {
-    width: min(90%, 420px);
-    padding: 30px;
+.gameLogo {
+    width: 86px;
+    height: 86px;
+    margin: 0 auto 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 3px solid #ffffff;
+    border-radius: 18px;
+
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: 2px;
 }
 
-#loadingContent h1 {
-    font-size: clamp(34px, 9vw, 58px);
-    letter-spacing: 5px;
-    margin-bottom: 12px;
+.loadingBox h1 {
+    font-size: 30px;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
 }
 
-#loadingContent p {
-    color: #cbd5df;
+.loadingBox p {
+    color: #bbbbbb;
     font-size: 14px;
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
-#loadingBar {
+.loadingBar {
     width: 100%;
-    height: 7px;
+    height: 8px;
+
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.15);
 }
 
@@ -118,17 +131,23 @@ button:active {
     height: 100%;
     border-radius: inherit;
     background: #ffffff;
-    transition: width 0.25s ease;
+    transition: width 0.2s ease;
+}
+
+#loadingText {
+    margin-top: 12px;
+    color: #aaaaaa;
+    font-size: 12px;
 }
 
 /* =========================================================
-   FULL SCREEN PANELS
+   FULL SCREEN ACCOUNT / CHARACTER / LOGIN
    ========================================================= */
 
 .screen {
     position: fixed;
     inset: 0;
-    z-index: 1500;
+    z-index: 900;
 
     display: flex;
     align-items: center;
@@ -137,135 +156,153 @@ button:active {
     padding: 20px;
 
     background:
-        linear-gradient(
-            rgba(0, 0, 0, 0.65),
-            rgba(0, 0, 0, 0.82)
-        );
-
-    backdrop-filter: blur(6px);
+        radial-gradient(circle at center, #242424 0%, #0b0b0b 60%, #000000 100%);
 }
 
 .panel {
     width: min(92vw, 430px);
-    max-height: 92vh;
+    max-height: 94vh;
     overflow-y: auto;
 
-    padding: 28px;
-
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 18px;
-
-    background: rgba(14, 22, 31, 0.94);
-
-    box-shadow:
-        0 20px 70px rgba(0, 0, 0, 0.55);
+    padding: 28px 22px;
 
     text-align: center;
+
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 22px;
+
+    background: rgba(12, 12, 12, 0.94);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+
+    backdrop-filter: blur(12px);
 }
 
 .panel h1 {
-    font-size: 32px;
-    letter-spacing: 3px;
     margin-bottom: 8px;
+
+    font-size: 28px;
+    letter-spacing: 2px;
 }
 
-.panel h2 {
-    font-size: 21px;
+.subtitle,
+.panel > p {
+    color: #aaaaaa;
+    font-size: 14px;
     margin-bottom: 20px;
 }
 
-.panel h3 {
-    font-size: 16px;
-    margin: 18px 0 12px;
-}
-
-.panel p {
-    color: #c7d0d9;
-    line-height: 1.5;
-    margin-bottom: 16px;
-}
-
-/* =========================================================
-   FORM
-   ========================================================= */
-
-.panel label {
-    display: block;
-    margin: 14px 0 7px;
-    text-align: left;
-    font-size: 13px;
-    color: #d9e0e6;
-}
-
 .panel input[type="text"],
-.panel input[type="password"],
-.panel input[type="file"],
-.panel select {
+.panel input[type="password"] {
     width: 100%;
-    min-height: 46px;
+    height: 50px;
 
-    padding: 10px 13px;
+    margin-bottom: 12px;
+    padding: 0 15px;
 
-    color: #ffffff;
-    background: #17232f;
-
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 10px;
-
+    border: 1px solid #333333;
+    border-radius: 12px;
     outline: none;
+
+    background: #181818;
+    color: #ffffff;
 }
 
-.panel input:focus,
-.panel select:focus {
-    border-color: rgba(255, 255, 255, 0.55);
+.panel input:focus {
+    border-color: #ffffff;
 }
 
 .panel input::placeholder {
-    color: #82909c;
+    color: #777777;
 }
-
-/* =========================================================
-   PANEL BUTTONS
-   ========================================================= */
 
 .panel button {
     width: 100%;
-    min-height: 46px;
+    min-height: 48px;
 
-    margin-top: 12px;
+    margin-top: 8px;
 
-    border-radius: 10px;
+    border-radius: 12px;
 
-    color: #101820;
     background: #ffffff;
+    color: #000000;
 
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: 0.5px;
 }
 
-#maleButton,
-#femaleButton {
-    width: calc(50% - 6px);
-    margin: 0 3px;
-    background: #243443;
+.panel .secondaryBtn {
+    background: #242424;
     color: #ffffff;
+    border: 1px solid #444444;
 }
 
-#generateCharacterButton,
-#createAccountButton,
-#loginButton {
-    margin-top: 20px;
+#accountMessage,
+#loginMessage,
+#characterMessage {
+    min-height: 20px;
+    margin-top: 12px;
+    color: #ffcc66;
+    font-size: 13px;
 }
 
 /* =========================================================
-   PHOTO UPLOAD
+   CHARACTER PHOTO
    ========================================================= */
 
-#photoUploadArea {
-    margin-top: 15px;
-    padding: 18px;
+.photoBox {
+    position: relative;
 
-    border: 1px dashed rgba(255, 255, 255, 0.28);
-    border-radius: 12px;
+    width: 140px;
+    height: 140px;
+
+    margin: 0 auto 14px;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px dashed #555555;
+    border-radius: 50%;
+
+    background: #151515;
+}
+
+#photoPreview {
+    width: 100%;
+    height: 100%;
+
+    display: none;
+
+    object-fit: cover;
+}
+
+#photoPlaceholder {
+    color: #777777;
+    font-size: 13px;
+}
+
+#photoButton {
+    margin-bottom: 14px;
+}
+
+.genderButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.genderButtons button {
+    background: #252525;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+#boyBtn.selected,
+#girlBtn.selected {
+    background: #ffffff;
+    color: #000000;
 }
 
 /* =========================================================
@@ -275,160 +312,41 @@ button:active {
 #gameUI {
     position: fixed;
     inset: 0;
-    z-index: 20;
+    z-index: 100;
+
     pointer-events: none;
 }
 
 /* =========================================================
-   TOP HUD
+   PLAYER INFO
    ========================================================= */
 
-#topHUD {
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    width: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding:
-        max(12px, env(safe-area-inset-top))
-        14px
-        12px
-        14px;
-
-    background:
-        linear-gradient(
-            rgba(0, 0, 0, 0.55),
-            rgba(0, 0, 0, 0)
-        );
-}
-
-#playerInfo,
-#mapName,
-#menuButton {
-    pointer-events: auto;
-}
-
 #playerInfo {
-    min-width: 85px;
+    position: absolute;
+    top: 14px;
+    left: 14px;
 
-    padding: 8px 11px;
+    padding: 9px 13px;
 
-    border-radius: 9px;
-    background: rgba(0, 0, 0, 0.42);
+    border-radius: 12px;
 
-    font-size: 13px;
-    font-weight: 700;
+    background: rgba(0, 0, 0, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+
+    backdrop-filter: blur(6px);
+}
+
+#playerNameDisplay {
+    font-size: 14px;
+    font-weight: 800;
 }
 
 #mapName {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: 2px;
+    margin-top: 3px;
 
-    text-shadow: 0 2px 8px #000;
-}
-
-#menuButton {
-    width: 42px;
-    height: 42px;
-
-    border-radius: 50%;
-
-    color: #ffffff;
-    background: rgba(0, 0, 0, 0.52);
-
-    font-size: 21px;
-}
-
-/* =========================================================
-   MINIMAP
-   ========================================================= */
-
-#minimapContainer {
-    position: absolute;
-    top: 72px;
-    right: 14px;
-
-    pointer-events: none;
-}
-
-#minimap {
-    position: relative;
-
-    width: 125px;
-    height: 125px;
-
-    overflow: hidden;
-
-    border: 2px solid rgba(255, 255, 255, 0.75);
-    border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            #657f58,
-            #31472f
-        );
-
-    box-shadow:
-        0 4px 18px rgba(0, 0, 0, 0.45);
-}
-
-#mapPlayerMarker {
-    position: absolute;
-
-    left: 50%;
-    top: 50%;
-
-    width: 10px;
-    height: 10px;
-
-    transform: translate(-50%, -50%);
-
-    border-radius: 50%;
-    background: #ffffff;
-
-    box-shadow: 0 0 8px #ffffff;
-}
-
-.mapMarker {
-    position: absolute;
-
-    width: 8px;
-    height: 8px;
-
-    border-radius: 50%;
-    background: #ffcc00;
-}
-
-#collegeMarker {
-    left: 48%;
-    top: 30%;
-}
-
-#csaHostelMarker {
-    left: 20%;
-    top: 68%;
-}
-
-#girlsHostelMarker {
-    right: 20%;
-    top: 68%;
-}
-
-#sportsMarker {
-    left: 72%;
-    top: 45%;
-}
-
-#gateMarker {
-    left: 48%;
-    bottom: 8%;
+    color: #dddddd;
+    font-size: 10px;
+    letter-spacing: 1.5px;
 }
 
 /* =========================================================
@@ -438,107 +356,139 @@ button:active {
 #missionHUD {
     position: absolute;
 
-    left: 14px;
-    top: 78px;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
 
-    width: min(235px, 55vw);
+    width: min(58vw, 330px);
 
-    padding: 10px 12px;
+    padding: 9px 14px;
 
-    border-left: 3px solid #ffffff;
-    border-radius: 8px;
+    border-radius: 12px;
 
-    background: rgba(0, 0, 0, 0.48);
+    text-align: center;
 
-    text-shadow: 0 1px 4px #000;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+
+    backdrop-filter: blur(6px);
 }
 
-#missionTitle {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: #bfc9d2;
-    margin-bottom: 3px;
+.missionTitle {
+    font-size: 9px;
+    color: #aaaaaa;
+    letter-spacing: 1.5px;
 }
 
 #missionText {
-    font-size: 13px;
-    font-weight: 700;
-}
+    margin-top: 3px;
 
-#destinationDistance {
-    margin-top: 4px;
-    font-size: 11px;
-    color: #d5dde4;
-}
-
-/* =========================================================
-   INTERACTION
-   ========================================================= */
-
-#interactionMessage {
-    position: absolute;
-
-    left: 50%;
-    bottom: 22%;
-
-    transform: translateX(-50%);
-
-    padding: 9px 15px;
-
-    border-radius: 20px;
-
-    background: rgba(0, 0, 0, 0.68);
-
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 /* =========================================================
-   DIALOGUE
+   MINIMAP
    ========================================================= */
 
-#dialogueBox {
+#minimap {
     position: absolute;
 
-    left: 50%;
-    bottom: 8%;
+    top: 14px;
+    right: 14px;
 
-    width: min(90vw, 520px);
+    width: 145px;
+    height: 145px;
 
-    transform: translateX(-50%);
+    overflow: hidden;
 
-    padding: 16px;
-
+    border: 2px solid rgba(255, 255, 255, 0.7);
     border-radius: 14px;
 
-    background: rgba(8, 14, 20, 0.93);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(30, 70, 35, 0.88),
+            rgba(18, 45, 22, 0.88)
+        );
 
-    border: 1px solid rgba(255, 255, 255, 0.15);
-
-    pointer-events: auto;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
 }
 
-#dialogueCharacterName {
+.mapTitle {
+    position: absolute;
+    top: 7px;
+    left: 0;
+    right: 0;
+
+    text-align: center;
+
+    font-size: 9px;
     font-weight: 800;
-    margin-bottom: 8px;
+    letter-spacing: 1px;
 }
 
-#dialogueText {
-    color: #d6dee5;
-    line-height: 1.45;
-    font-size: 14px;
+#mapPlayer,
+.mapMarker {
+    position: absolute;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 8px;
+    font-weight: 900;
 }
 
-#dialogueNextButton {
-    width: 100%;
-    margin-top: 12px;
-    padding: 10px;
+#mapPlayer {
+    left: 50%;
+    top: 50%;
 
-    border-radius: 9px;
+    width: 12px;
+    height: 12px;
 
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
     background: #ffffff;
-    color: #111111;
-    font-weight: 700;
+    color: #000000;
+
+    box-shadow: 0 0 8px #ffffff;
+}
+
+.mapMarker {
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.collegeMarker {
+    left: 62%;
+    top: 38%;
+}
+
+.csaMarker {
+    left: 24%;
+    top: 64%;
+}
+
+.girlsMarker {
+    left: 72%;
+    top: 70%;
+}
+
+.sportsMarker {
+    left: 38%;
+    top: 23%;
+}
+
+.gateMarker {
+    left: 46%;
+    top: 86%;
 }
 
 /* =========================================================
@@ -549,52 +499,147 @@ button:active {
     position: absolute;
 
     left: 50%;
-    top: 44%;
+    top: 43%;
 
     transform: translate(-50%, -50%);
 
-    font-size: 34px;
-    font-weight: 900;
-
-    text-shadow: 0 2px 8px #000;
-}
-
-/* =========================================================
-   MOVEMENT JOYSTICK
-   ========================================================= */
-
-#movementControls {
-    position: absolute;
-
-    left: 20px;
-    bottom: 25px;
-
-    pointer-events: auto;
-}
-
-#joystick {
-    width: 145px;
-    height: 145px;
+    width: 48px;
+    height: 48px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-#joystickBase {
-    position: relative;
-
-    width: 120px;
-    height: 120px;
 
     border-radius: 50%;
 
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.42);
 
-    border: 2px solid rgba(255, 255, 255, 0.24);
+    font-size: 32px;
+    font-weight: 900;
+
+    text-shadow: 0 2px 8px #000000;
+}
+
+/* =========================================================
+   INTERACTION MESSAGE
+   ========================================================= */
+
+#interactionMessage {
+    position: absolute;
+
+    left: 50%;
+    bottom: 132px;
+
+    transform: translateX(-50%);
+
+    min-width: 180px;
+    padding: 9px 15px;
+
+    text-align: center;
+
+    border-radius: 10px;
+
+    background: rgba(0, 0, 0, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+#interactionMessage.visible {
+    opacity: 1;
+}
+
+/* =========================================================
+   DIALOGUE
+   ========================================================= */
+
+#dialogueBox {
+    position: absolute;
+
+    left: 50%;
+    bottom: 24px;
+
+    transform: translateX(-50%);
+
+    width: min(90vw, 520px);
+
+    padding: 15px;
+
+    border-radius: 16px;
+
+    background: rgba(8, 8, 8, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    pointer-events: auto;
+}
+
+#dialogueName {
+    margin-bottom: 6px;
+
+    font-weight: 900;
+    font-size: 14px;
+}
+
+#dialogueText {
+    color: #dddddd;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#dialogueClose {
+    width: 100%;
+    height: 38px;
+
+    margin-top: 12px;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #000000;
+
+    font-weight: 800;
+}
+
+/* =========================================================
+   JOYSTICK
+   ========================================================= */
+
+#joystickArea {
+    position: absolute;
+
+    left: 20px;
+    bottom: 24px;
+
+    width: 150px;
+    height: 150px;
+
+    pointer-events: auto;
+    touch-action: none;
+}
+
+#joystickBase {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 112px;
+    height: 112px;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.38);
+    border: 2px solid rgba(255, 255, 255, 0.28);
 
     box-shadow:
-        inset 0 0 25px rgba(0, 0, 0, 0.25);
+        inset 0 0 20px rgba(255, 255, 255, 0.05),
+        0 5px 20px rgba(0, 0, 0, 0.3);
 }
 
 #joystickStick {
@@ -610,327 +655,47 @@ button:active {
 
     border-radius: 50%;
 
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.82);
+    border: 2px solid rgba(0, 0, 0, 0.35);
 
-    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 
-    box-shadow:
-        0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.04s linear;
 }
 
 /* =========================================================
-   FREE LOOK AREA
+   FREE LOOK
    ========================================================= */
 
 #lookArea {
     position: absolute;
 
-    right: 0;
-    top: 0;
-
-    width: 65%;
-    height: 100%;
+    left: 28%;
+    right: 25%;
+    top: 25%;
+    bottom: 22%;
 
     pointer-events: auto;
-
     touch-action: none;
 
     background: transparent;
 }
 
+/*
+   This area is intentionally invisible.
+   JS receives touch/mouse drag here for:
+   - 360° horizontal look
+   - up/down look
+   - left/right look
+   - behind-player look
+*/
+
 /* =========================================================
    ACTION BUTTONS
    ========================================================= */
 
-#actionControls {
+#actionButtons {
     position: absolute;
 
-    right: 20px;
-    bottom: 25px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-
-    pointer-events: auto;
-}
-
-#actionControls button {
-    min-width: 72px;
-    height: 48px;
-
-    padding: 0 14px;
-
-    border-radius: 14px;
-
-    color: #ffffff;
-
-    background: rgba(0, 0, 0, 0.48);
-
-    border: 1px solid rgba(255, 255, 255, 0.25);
-
-    font-size: 11px;
-    font-weight: 800;
-
-    backdrop-filter: blur(4px);
-}
-
-#jumpButton {
-    width: 68px;
-    height: 68px !important;
-    border-radius: 50% !important;
-}
-
-#runButton {
-    opacity: 0.95;
-}
-
-#interactButton {
-    display: none;
-}
-
-/* =========================================================
-   GAME ACTIONS
-   ========================================================= */
-
-#gameActions {
-    position: absolute;
-
-    left: 15px;
-    top: 215px;
-
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    pointer-events: auto;
-}
-
-#gameActions button {
-    min-width: 65px;
-    padding: 8px 10px;
-
-    border-radius: 8px;
-
-    color: #ffffff;
-    background: rgba(0, 0, 0, 0.45);
-
-    border: 1px solid rgba(255, 255, 255, 0.2);
-
-    font-size: 10px;
-    font-weight: 700;
-}
-
-/* =========================================================
-   MAP PANEL
-   ========================================================= */
-
-.mapPanel {
-    width: min(94vw, 650px);
-}
-
-#fullMap {
-    position: relative;
-
-    width: 100%;
-    height: min(65vh, 430px);
-
-    overflow: hidden;
-
-    border-radius: 14px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #516f48,
-            #304b31
-        );
-
-    border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-#fullMapPlayer {
-    position: absolute;
-
-    left: 50%;
-    top: 50%;
-
-    width: 13px;
-    height: 13px;
-
-    transform: translate(-50%, -50%);
-
-    border-radius: 50%;
-    background: #ffffff;
-}
-
-#fullMap span {
-    position: absolute;
-
-    padding: 5px 7px;
-
-    border-radius: 6px;
-
-    background: rgba(0, 0, 0, 0.6);
-
-    font-size: 10px;
-    font-weight: 700;
-}
-
-#fullMapCollege {
-    left: 42%;
-    top: 20%;
-}
-
-#fullMapCSA {
-    left: 10%;
-    bottom: 20%;
-}
-
-#fullMapGirls {
-    right: 10%;
-    bottom: 20%;
-}
-
-#fullMapSports {
-    right: 15%;
-    top: 42%;
-}
-
-#fullMapGate {
-    left: 42%;
-    bottom: 5%;
-}
-
-/* =========================================================
-   MISSIONS
-   ========================================================= */
-
-#missionList {
-    list-style: none;
-
-    max-height: 48vh;
-    overflow-y: auto;
-
-    text-align: left;
-}
-
-#missionList li {
-    padding: 12px;
-
-    margin-bottom: 7px;
-
-    border-radius: 9px;
-
-    background: #17232f;
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
-    font-size: 13px;
-}
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 600px) {
-
-    #mapName {
-        font-size: 14px;
-    }
-
-    #minimap {
-        width: 105px;
-        height: 105px;
-    }
-
-    #minimapContainer {
-        right: 10px;
-        top: 65px;
-    }
-
-    #missionHUD {
-        left: 10px;
-        top: 68px;
-        width: 190px;
-    }
-
-    #movementControls {
-        left: 7px;
-        bottom: 12px;
-    }
-
-    #joystick {
-        width: 135px;
-        height: 135px;
-    }
-
-    #joystickBase {
-        width: 110px;
-        height: 110px;
-    }
-
-    #actionControls {
-        right: 12px;
-        bottom: 12px;
-    }
-
-    #gameActions {
-        left: 10px;
-        top: 185px;
-    }
-
-    #dialogueBox {
-        bottom: 105px;
-    }
-}
-
-/* =========================================================
-   SMALL HEIGHT SCREENS
-   ========================================================= */
-
-@media (max-height: 600px) {
-
-    #movementControls {
-        bottom: 8px;
-    }
-
-    #actionControls {
-        bottom: 8px;
-    }
-
-    #minimap {
-        width: 90px;
-        height: 90px;
-    }
-
-    #missionHUD {
-        top: 62px;
-    }
-}
-
-/* =========================================================
-   DESKTOP
-   ========================================================= */
-
-@media (min-width: 901px) {
-
-    #lookArea {
-        width: 58%;
-    }
-
-    #movementControls {
-        bottom: 30px;
-        left: 30px;
-    }
-
-    #actionControls {
-        right: 30px;
-        bottom: 30px;
-    }
-
-    #minimapContainer {
-        right: 25px;
-    }
-}
+    right: 18px;
+   
