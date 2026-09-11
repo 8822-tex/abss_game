@@ -2,22 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>ABSS Map</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+  >
+
+  <title>Krishna's ABSSIT 3D Campus</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div id="loading"><div class="loader"></div><b>ABSS MAP</b><span>Loading campus...</span></div>
-  <div id="hud">
-    <div class="brand"><b>ABSS MAP</b><small>ABSS Institute of Technology • Meerut</small></div>
-    <div id="lookHint">Swipe the right side to look around</div>
+
+  <div id="loading">
+    <div class="loader"></div>
+    <b>ABSSIT CAMPUS</b>
+    <span>Loading 3D campus...</span>
   </div>
 
-  <div id="joystick"><div id="stick"></div></div>
-  <button id="jumpBtn" class="roundBtn">JUMP</button>
-  <button id="runBtn" class="roundBtn">RUN</button>
+  <div id="hud">
+    <div class="brand">
+      <b>ABSSIT</b>
+      <small>ABSS Institute of Technology • Meerut</small>
+    </div>
+
+    <div id="lookHint">
+      Swipe right side to look
+    </div>
+  </div>
+
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+
+  <button id="jumpBtn" class="roundBtn">
+    JUMP
+  </button>
+
+  <button id="runBtn" class="roundBtn">
+    RUN
+  </button>
+
   <div id="lookArea"></div>
 
   <script type="module" src="game.js"></script>
+
 </body>
 </html>
