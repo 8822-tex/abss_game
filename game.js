@@ -1,393 +1,1873 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-/* =========================================================
-   ABSS MAP — fresh base
-   Low-poly realistic campus style + free camera look
-   ========================================================= */
+let scene;
+let camera;
+let renderer;
+let player;
+let world;
 
-let scene, camera, renderer, player;
-let leftLeg, rightLeg;
+let cameraYaw = 0;
+let cameraPitch = -0.18;
+
 let velocityY = 0;
 let onGround = true;
 let running = false;
-let walkCycle = 0;
-let cameraYaw = 0;
-let cameraPitch = -0.12;
-let lookActive = false;
-let lastLookX = 0;
-let lastLookY = 0;
-let gateLeft, gateRight;
-let gateOpen = false;
 
-const clock = new THREE.Clock();
-const keys = {forward:false, backward:false, left:false, right:false};
-const joystick = {x:0,y:0,active:false};
+let lastTime = performance.now();
 
-const tmp = new THREE.Vector3();
+const keys = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false
+};
+
+const joystick = {
+  x: 0,
+  y: 0,
+  active: false,
+  id: null
+};
+
+const look = {
+  active: false,
+  id: null,
+  x: 0,
+  y: 0
+};
+
+const colliders = [];
+
+const move = new THREE.Vector3();
 
 init();
-animate();
 
-function mat(color, roughness=.82, metalness=0){
-  return new THREE.MeshStandardMaterial({color,roughness,metalness});
-}
-
-function init(){
+function init() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x83b9d8);
-  scene.fog = new THREE.Fog(0x83b9d8,150,500);
 
-  camera = new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,700);
-  camera.position.set(0,5,14);
+  scene.background = new THREE.Color(0x8ec5e6);
 
-  renderer = new THREE.WebGLRenderer({antialias:false,powerPreference:"high-performance"});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
-  renderer.setSize(innerWidth,innerHeight);
+  scene.fog = new THREE.Fog(
+    0x8ec5e6,
+    70,
+    420
+  );
+
+  camera = new THREE.PerspectiveCamera(
+    65,
+    innerWidth / innerHeight,
+    0.1,
+    500
+  );
+
+  camera.position.set(0, 5, 10);
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: "high-performance"
+  });
+
+  renderer.setPixelRatio(
+    Math.min(devicePixelRatio, 1.75)
+  );
+
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
+
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  document.body.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0xeaf7ff,0x3f5d35,2.0));
-  const sun = new THREE.DirectionalLight(0xfff2d8,2.5);
-  sun.position.set(120,160,80);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(1024,1024);
-  sun.shadow.camera.left=-190; sun.shadow.camera.right=190;
-  sun.shadow.camera.top=190; sun.shadow.camera.bottom=-190;
-  scene.add(sun);
+  renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
 
-  createGround();
-  createRoads();
-  createMainGate();
-  createAcademicBlocks();
-  createHostels();
-  createGardens();
-  createSports();
-  createParking();
-  createTrees();
+  renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+  document.body.appendChild(
+    renderer.domElement
+  );
+
+  createLights();
+
+  world = new THREE.Group();
+
+  scene.add(world);
+
+  buildCampus();
+
   createPlayer();
-  setupKeyboard();
-  setupJoystick();
-  setupLook();
-  setupButtons();
-  addWorldBoundary();
-  addEventListener("resize",resize);
 
-  setTimeout(()=>document.getElementById("loading")?.classList.add("hide"),450);
+  setupControls();
+
+  hideLoading();
+
+  window.addEventListener(
+    "resize",
+    onResize
+  );
+
+  animate();
 }
 
-function createGround(){
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x4f8147));
-  ground.rotation.x=-Math.PI/2;
-  ground.receiveShadow=true;
-  scene.add(ground);
+function createLights() {
+  const hemisphere =
+    new THREE.HemisphereLight(
+      0xdff2ff,
+      0x506044,
+      2.2
+    );
 
-  for(let i=0;i<45;i++){
-    const patch=new THREE.Mesh(new THREE.CircleGeometry(2.5+(i%4),8),mat(i%2?0x5b8d4e:0x47783f));
-    const x=((i*47)%280)-140, z=((i*83)%260)-130;
-    patch.rotation.x=-Math.PI/2;
-    patch.position.set(x,.015,z);
-    scene.add(patch);
+  scene.add(hemisphere);
+
+  const sun =
+    new THREE.DirectionalLight(
+      0xffffff,
+      3
+    );
+
+  sun.position.set(
+    80,
+    120,
+    50
+  );
+
+  sun.castShadow = true;
+
+  sun.shadow.mapSize.set(
+    2048,
+    2048
+  );
+
+  sun.shadow.camera.left = -180;
+  sun.shadow.camera.right = 180;
+  sun.shadow.camera.top = 180;
+  sun.shadow.camera.bottom = -180;
+
+  scene.add(sun);
+}
+
+function material(
+  color,
+  roughness = 0.8
+) {
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness,
+    metalness: 0.05
+  });
+}
+
+function box(
+  name,
+  x,
+  y,
+  z,
+  sx,
+  sy,
+  sz,
+  color,
+  group = world
+) {
+  const mesh =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        sx,
+        sy,
+        sz
+      ),
+      material(color)
+    );
+
+  mesh.name = name;
+
+  mesh.position.set(
+    x,
+    y + sy / 2,
+    z
+  );
+
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
+  group.add(mesh);
+
+  return mesh;
+}
+
+function addCollider(
+  x,
+  z,
+  sx,
+  sz
+) {
+  colliders.push({
+    x,
+    z,
+    sx,
+    sz
+  });
+}
+
+function addLabel(
+  text,
+  x,
+  y,
+  z,
+  size = 1.2
+) {
+  const canvas =
+    document.createElement("canvas");
+
+  canvas.width = 1024;
+  canvas.height = 256;
+
+  const context =
+    canvas.getContext("2d");
+
+  context.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  context.fillStyle = "#ffffff";
+
+  context.font =
+    "bold 100px Arial";
+
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  context.shadowColor = "#000";
+  context.shadowBlur = 10;
+
+  context.fillText(
+    text,
+    512,
+    128
+  );
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas
+    );
+
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+
+  const sprite =
+    new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthTest: false
+      })
+    );
+
+  sprite.position.set(
+    x,
+    y,
+    z
+  );
+
+  sprite.scale.set(
+    size * 4,
+    size,
+    1
+  );
+
+  world.add(sprite);
+
+  return sprite;
+}
+
+/* =========================================================
+   CAMPUS
+   ========================================================= */
+
+function buildCampus() {
+  buildGround();
+  buildRoads();
+  buildGate();
+
+  buildAcademicBlock(
+    -42,
+    0,
+    "Mahatma Gandhi Block"
+  );
+
+  buildAcademicBlock(
+    42,
+    0,
+    "Madan Mohan Malviya Block"
+  );
+
+  buildAcademicBlock(
+    0,
+    -58,
+    "Vishvesaraya Block"
+  );
+
+  buildHostel(
+    -82,
+    48,
+    "Boys Hostel"
+  );
+
+  buildHostel(
+    82,
+    48,
+    "Girls Hostel"
+  );
+
+  buildSports();
+  buildGardens();
+  buildParking();
+  buildTrees();
+}
+
+function buildGround() {
+  box(
+    "Campus Ground",
+    0,
+    -0.2,
+    0,
+    360,
+    0.2,
+    360,
+    0x6fa35b
+  );
+}
+
+function buildRoads() {
+  box(
+    "Main Road",
+    0,
+    0,
+    55,
+    22,
+    0.12,
+    180,
+    0x35383b
+  );
+
+  box(
+    "Central Road",
+    0,
+    0,
+    0,
+    180,
+    0.12,
+    16,
+    0x35383b
+  );
+
+  box(
+    "Left Road",
+    -65,
+    0,
+    0,
+    14,
+    0.12,
+    180,
+    0x3e4144
+  );
+
+  box(
+    "Right Road",
+    65,
+    0,
+    0,
+    14,
+    0.12,
+    180,
+    0x3e4144
+  );
+
+  for (
+    let z = -75;
+    z <= 75;
+    z += 15
+  ) {
+    box(
+      "Road Mark",
+      0,
+      0.13,
+      z,
+      0.35,
+      0.02,
+      7,
+      0xe6d9a4
+    );
   }
 }
 
-function road(x,z,w,d,color=0x55585b){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,.10,d),mat(color));
-  m.position.set(x,.05,z); m.receiveShadow=true; scene.add(m); return m;
+/* =========================================================
+   MAIN GATE + BOUNDARY
+   ========================================================= */
+
+function buildGate() {
+  const gate =
+    new THREE.Group();
+
+  world.add(gate);
+
+  box(
+    "Gate Pillar Left",
+    -8,
+    0,
+    88,
+    3,
+    8,
+    3,
+    0xe8e0cf,
+    gate
+  );
+
+  box(
+    "Gate Pillar Right",
+    8,
+    0,
+    88,
+    3,
+    8,
+    3,
+    0xe8e0cf,
+    gate
+  );
+
+  box(
+    "Gate Top",
+    0,
+    7.2,
+    88,
+    19,
+    2,
+    3,
+    0x8e2026,
+    gate
+  );
+
+  addLabel(
+    "ABSS INSTITUTE OF TECHNOLOGY",
+    0,
+    8.25,
+    86.3,
+    1.5
+  );
+
+  box(
+    "Gate Left Door",
+    -4.1,
+    0,
+    86.4,
+    7.3,
+    4.2,
+    0.45,
+    0x25282a,
+    gate
+  );
+
+  box(
+    "Gate Right Door",
+    4.1,
+    0,
+    86.4,
+    7.3,
+    4.2,
+    0.45,
+    0x25282a,
+    gate
+  );
+
+  buildWall(
+    -120,
+    0,
+    90,
+    3,
+    180,
+    0.7
+  );
+
+  buildWall(
+    120,
+    0,
+    90,
+    3,
+    180,
+    0.7
+  );
+
+  buildWall(
+    0,
+    0,
+    -90,
+    240,
+    3,
+    0.7
+  );
 }
 
-function createRoads(){
-  road(0,25,18,290);
-  road(0,-50,300,18);
-  road(0,108,300,16);
-  road(-108,20,14,250);
-  road(108,20,14,250);
-  road(0,-12,8,55,0xb8b2a6);
-  road(0,55,8,55,0xb8b2a6);
+function buildWall(
+  x,
+  y,
+  z,
+  sx,
+  sz,
+  sy
+) {
+  box(
+    "Boundary Wall",
+    x,
+    y,
+    z,
+    sx,
+    sy,
+    sz,
+    0xd5d0c3
+  );
+
+  addCollider(
+    x,
+    z,
+    sx,
+    sz
+  );
 }
 
-function board(text,width=8){
-  const c=document.createElement("canvas"); c.width=900;c.height=140;
-  const ctx=c.getContext("2d");
-  ctx.fillStyle="#f0eee8";ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle="#8e2e2e";ctx.font="bold 48px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.fillText(text,c.width/2,c.height/2);
-  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
-  return new THREE.Mesh(new THREE.PlaneGeometry(width,width*.155),new THREE.MeshBasicMaterial({map:t}));
-}
+/* =========================================================
+   ACADEMIC BUILDINGS
+   ========================================================= */
 
-function createBuilding(x,z,w,d,floors,name){
-  const h=floors*4.1;
-  const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(0xa94739));
-  body.position.set(x,h/2,z);body.castShadow=true;body.receiveShadow=true;scene.add(body);
+function buildAcademicBlock(
+  x,
+  z,
+  label
+) {
+  const group =
+    new THREE.Group();
 
-  for(let f=1;f<floors;f++){
-    const band=new THREE.Mesh(new THREE.BoxGeometry(w+.18,.20,d+.18),mat(0xf0eee8));
-    band.position.set(x,f*4.1,z);scene.add(band);
+  world.add(group);
+
+  const width = 48;
+  const depth = 30;
+  const floorHeight = 4.2;
+  const floors = 3;
+
+  for (
+    let floor = 0;
+    floor < floors;
+    floor++
+  ) {
+    box(
+      label + " Floor",
+      x,
+      floor * floorHeight,
+      z,
+      width,
+      floorHeight - 0.15,
+      depth,
+      0xd9d3c5,
+      group
+    );
+
+    box(
+      label + " Band",
+      x,
+      floor * floorHeight +
+        floorHeight -
+        0.25,
+      z,
+      width,
+      0.25,
+      depth + 0.15,
+      0x9d9588,
+      group
+    );
+
+    addWindows(
+      group,
+      x,
+      z,
+      floor,
+      width,
+      depth,
+      floorHeight
+    );
   }
 
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(w+1,.35,d+1),mat(0x7f2a2a));
-  roof.position.set(x,h+.18,z);roof.castShadow=true;scene.add(roof);
-  windows(x,z,w,d,floors);
-  const b=board(name,Math.min(10,w*.2));b.position.set(x,h-1.1,z-d/2-.08);scene.add(b);
+  box(
+    label + " Roof",
+    x,
+    floors * floorHeight,
+    z,
+    width + 2,
+    0.7,
+    depth + 2,
+    0x6c7072,
+    group
+  );
+
+  box(
+    label + " Entrance",
+    x,
+    0,
+    z + depth / 2 + 0.35,
+    8,
+    6,
+    0.8,
+    0x7f8a91,
+    group
+  );
+
+  addLabel(
+    label,
+    x,
+    13.7,
+    z - depth / 2 - 0.8,
+    1.2
+  );
+
+  buildInterior(
+    group,
+    x,
+    z,
+    width,
+    depth,
+    floors,
+    label
+  );
 }
 
-function windows(x,z,w,d,floors){
-  const glass=mat(0x79b4c6,.18,.08), frame=mat(0xf0eee8);
-  const count=Math.max(4,Math.floor(w/4.2));
-  for(let f=0;f<floors;f++){
-    const y=1.65+f*4.1;
-    for(let i=0;i<count;i++){
-      const px=x-w/2+2.2+i*((w-4.4)/Math.max(1,count-1));
-      const win=new THREE.Mesh(new THREE.BoxGeometry(1.45,1.55,.08),glass);
-      win.position.set(px,y,z-d/2-.07);scene.add(win);
-      const v=new THREE.Mesh(new THREE.BoxGeometry(.07,1.72,.12),frame);
-      v.position.set(px,y,z-d/2-.12);scene.add(v);
+function addWindows(
+  group,
+  x,
+  z,
+  floor,
+  width,
+  depth,
+  height
+) {
+  const y =
+    floor * height + 1.1;
+
+  for (
+    let i = -3;
+    i <= 3;
+    i++
+  ) {
+    const windowX =
+      x + i * 5.8;
+
+    box(
+      "Window",
+      windowX,
+      y,
+      z + depth / 2 + 0.16,
+      3.8,
+      2.1,
+      0.16,
+      0x5e8fb1,
+      group
+    );
+
+    box(
+      "Window",
+      windowX,
+      y,
+      z - depth / 2 - 0.16,
+      3.8,
+      2.1,
+      0.16,
+      0x5e8fb1,
+      group
+    );
+  }
+}
+
+/* =========================================================
+   INTERNAL DESIGN
+   ========================================================= */
+
+function buildInterior(
+  group,
+  x,
+  z,
+  width,
+  depth,
+  floors,
+  label
+) {
+  const floorMaterial =
+    material(0xc9c3b8);
+
+  for (
+    let floor = 0;
+    floor < floors;
+    floor++
+  ) {
+    const floorY =
+      floor * 4.2;
+
+    const floorMesh =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          width - 1,
+          0.15,
+          depth - 1
+        ),
+        floorMaterial
+      );
+
+    floorMesh.position.set(
+      x,
+      floorY + 0.08,
+      z
+    );
+
+    floorMesh.receiveShadow = true;
+
+    group.add(floorMesh);
+
+    /* Corridor */
+
+    box(
+      "Corridor",
+      x,
+      floorY + 0.15,
+      z,
+      7,
+      0.15,
+      depth - 3,
+      0xb5aea2,
+      group
+    );
+
+    /* Classrooms + Labs */
+
+    for (
+      let room = -1;
+      room <= 1;
+      room++
+    ) {
+      const roomZ =
+        z + room * 9;
+
+      makeClassroom(
+        group,
+        x - 15,
+        floorY + 0.15,
+        roomZ,
+        18,
+        7,
+        label +
+          " Classroom",
+        false
+      );
+
+      makeClassroom(
+        group,
+        x + 15,
+        floorY + 0.15,
+        roomZ,
+        18,
+        7,
+        label +
+          " Computer Lab",
+        true
+      );
+    }
+  }
+
+  for (
+    let floor = 0;
+    floor < floors - 1;
+    floor++
+  ) {
+    buildStairs(
+      group,
+      x,
+      z - 10,
+      floor * 4.2
+    );
+  }
+
+  makeReception(
+    group,
+    x,
+    0,
+    z + depth / 2 - 5
+  );
+}
+
+function makeClassroom(
+  group,
+  x,
+  y,
+  z,
+  width,
+  depth,
+  label,
+  isLab
+) {
+  const wallColor =
+    isLab
+      ? 0xd4e0df
+      : 0xe1ddd2;
+
+  box(
+    label + " Room",
+    x,
+    y,
+    z,
+    width,
+    3.8,
+    depth,
+    wallColor,
+    group
+  );
+
+  box(
+    label + " Board",
+    x,
+    y + 1.3,
+    z - depth / 2 - 0.12,
+    5.5,
+    2.3,
+    0.12,
+    isLab
+      ? 0x304b52
+      : 0x26363a,
+    group
+  );
+
+  for (
+    let i = -1;
+    i <= 1;
+    i++
+  ) {
+    box(
+      "Student Desk",
+      x + i * 3.8,
+      y + 0.55,
+      z + 1.2,
+      3,
+      0.18,
+      1.2,
+      0x805a3d,
+      group
+    );
+
+    box(
+      "Student Desk",
+      x + i * 3.8,
+      y + 0.55,
+      z + 3.6,
+      3,
+      0.18,
+      1.2,
+      0x805a3d,
+      group
+    );
+  }
+
+  if (isLab) {
+    for (
+      let i = -1;
+      i <= 1;
+      i++
+    ) {
+      box(
+        "Computer Table",
+        x + i * 4,
+        y + 0.75,
+        z - 2.5,
+        2.5,
+        0.12,
+        1.1,
+        0x4a4d50,
+        group
+      );
+
+      box(
+        "Computer Monitor",
+        x + i * 4,
+        y + 1.3,
+        z - 2.7,
+        1.4,
+        1.1,
+        0.12,
+        0x22272a,
+        group
+      );
     }
   }
 }
 
-function createAcademicBlocks(){
-  createBuilding(0,-75,58,30,4,"ABSS INSTITUTE OF TECHNOLOGY");
-  createBuilding(-62,-58,42,27,4,"MAHATMA GANDHI BLOCK");
-  createBuilding(62,-58,42,27,4,"VISHVESVARAYA BLOCK");
-
-  const white=mat(0xf0eee8), glass=mat(0x83c0d3,.15,.05);
-  for(const x of [-20,20]){
-    const p=new THREE.Mesh(new THREE.BoxGeometry(2.4,9,2.4),white);
-    p.position.set(x,4.5,-91);p.castShadow=true;scene.add(p);
+function buildStairs(
+  group,
+  x,
+  z,
+  y
+) {
+  for (
+    let i = 0;
+    i < 10;
+    i++
+  ) {
+    box(
+      "Stair",
+      x - 2.5 + i * 0.55,
+      y + i * 0.2,
+      z,
+      0.5,
+      0.2,
+      4.2,
+      0x8f8980,
+      group
+    );
   }
 
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(48,1.2,8),mat(0x922e2e));
-  roof.position.set(0,9,-91);roof.castShadow=true;scene.add(roof);
-
-  const front=new THREE.Mesh(new THREE.BoxGeometry(17,6,.22),glass);
-  front.position.set(0,3.2,-90.35);scene.add(front);
-  const sign=board("ABSS",6);sign.position.set(0,5.4,-90.5);scene.add(sign);
+  box(
+    "Stair Rail",
+    x + 3,
+    y + 1.5,
+    z,
+    0.15,
+    3,
+    4.2,
+    0x4f5558,
+    group
+  );
 }
 
-function createHostel(x,z,name){
-  createBuilding(x,z,40,27,4,name);
-  const entrance=new THREE.Mesh(new THREE.BoxGeometry(7,3.2,.6),mat(0x6e3329));
-  entrance.position.set(x,1.6,z-13.7);entrance.castShadow=true;scene.add(entrance);
-  const canopy=new THREE.Mesh(new THREE.BoxGeometry(10,.55,4),mat(0xe7e2d8));
-  canopy.position.set(x,4,z-15);scene.add(canopy);
+function makeReception(
+  group,
+  x,
+  y,
+  z
+) {
+  box(
+    "Reception Desk",
+    x,
+    y + 0.8,
+    z,
+    8,
+    1.2,
+    1.6,
+    0x765238,
+    group
+  );
+
+  addLabel(
+    "RECEPTION",
+    x,
+    y + 2.6,
+    z - 1,
+    0.75
+  );
 }
 
-function createHostels(){
-  createHostel(-78,65,"CSA BOYS HOSTEL");
-  createHostel(78,65,"GIRLS HOSTEL");
-}
+/* =========================================================
+   HOSTELS
+   ========================================================= */
 
-function createMainGate(){
-  const brick=mat(0x8f4030), dark=mat(0x603025), white=mat(0xf0eee8), metal=mat(0x5b514c,.35,.7);
-  for(const x of [-13,13]){
-    const p=new THREE.Mesh(new THREE.BoxGeometry(4,8,4),brick);p.position.set(x,4,108);p.castShadow=true;scene.add(p);
-    const cap=new THREE.Mesh(new THREE.BoxGeometry(4.5,.45,4.5),white);cap.position.set(x,8.2,108);scene.add(cap);
-    const base=new THREE.Mesh(new THREE.BoxGeometry(4.3,.7,4.3),dark);base.position.set(x,.35,108);scene.add(base);
-    const lamp=new THREE.Mesh(new THREE.SphereGeometry(.35,10,8),new THREE.MeshStandardMaterial({color:0xffd66b,emissive:0xffa000,emissiveIntensity:1.4}));lamp.position.set(x,8.75,108);scene.add(lamp);
+function buildHostel(
+  x,
+  z,
+  label
+) {
+  const group =
+    new THREE.Group();
+
+  world.add(group);
+
+  const width = 34;
+  const depth = 24;
+  const height = 4.1;
+
+  for (
+    let floor = 0;
+    floor < 3;
+    floor++
+  ) {
+    box(
+      label + " Floor",
+      x,
+      floor * height,
+      z,
+      width,
+      height - 0.15,
+      depth,
+      0xcfc7b8,
+      group
+    );
   }
 
-  const top=new THREE.Mesh(new THREE.BoxGeometry(25,1.2,1.3),brick);top.position.set(0,7.3,108);top.castShadow=true;scene.add(top);
-  const s=board("ABSS INSTITUTE OF TECHNOLOGY",11);s.position.set(0,6.05,107.25);scene.add(s);
+  box(
+    label + " Roof",
+    x,
+    12.3,
+    z,
+    width + 1,
+    0.7,
+    depth + 1,
+    0x6c7072,
+    group
+  );
 
-  gateLeft=new THREE.Group();gateRight=new THREE.Group();
-  buildGatePanel(gateLeft,-1);buildGatePanel(gateRight,1);
-  gateLeft.position.set(0,2.4,106.7);gateRight.position.set(0,2.4,106.7);
-  scene.add(gateLeft,gateRight);
-  road(0,118,28,18,0x646567);
-}
+  addLabel(
+    label,
+    x,
+    14,
+    z - depth / 2 - 0.7,
+    1
+  );
 
-function buildGatePanel(group,side){
-  const panel=new THREE.Mesh(new THREE.BoxGeometry(11,4.8,.35),mat(0x4c3228));
-  panel.position.x=side*5.5;panel.castShadow=true;group.add(panel);
-  for(let i=0;i<7;i++){
-    const bar=new THREE.Mesh(new THREE.BoxGeometry(.18,4.8,.45),mat(0x6e6862,.3,.7));
-    bar.position.set(side*(i*1.55+1),0,0);group.add(bar);
+  for (
+    let floor = 0;
+    floor < 3;
+    floor++
+  ) {
+    for (
+      let i = -2;
+      i <= 2;
+      i++
+    ) {
+      box(
+        "Hostel Window",
+        x + i * 5.5,
+        floor * height + 1.2,
+        z + depth / 2 + 0.15,
+        3.4,
+        2,
+        0.16,
+        0x5b88a4,
+        group
+      );
+    }
   }
 }
 
-function createGardens(){
-  const lawn=new THREE.Mesh(new THREE.BoxGeometry(78,.08,32),mat(0x58894a));lawn.position.set(0,.04,-12);scene.add(lawn);
-  for(let x=-36;x<=36;x+=6){bush(x,-29);bush(x,4)}
-  for(let x=-25;x<=25;x+=10)flower(x,-15);
+/* =========================================================
+   SPORTS / GARDEN / PARKING
+   ========================================================= */
+
+function buildSports() {
+  box(
+    "Sports Ground",
+    0,
+    0,
+    -8,
+    62,
+    0.08,
+    42,
+    0x4f9a4b
+  );
+
+  box(
+    "Sports Court",
+    0,
+    0.1,
+    -8,
+    36,
+    0.06,
+    20,
+    0xd2c39e
+  );
 }
 
-function bush(x,z){
-  const b=new THREE.Mesh(new THREE.SphereGeometry(1.25,8,6),mat(0x2f6d36));
-  b.position.set(x,.9,z);b.scale.y=.7;b.castShadow=true;scene.add(b)
+function buildGardens() {
+  box(
+    "Garden Left",
+    -35,
+    0.03,
+    38,
+    28,
+    0.06,
+    22,
+    0x3f8e45
+  );
+
+  box(
+    "Garden Right",
+    35,
+    0.03,
+    38,
+    28,
+    0.06,
+    22,
+    0x3f8e45
+  );
 }
 
-function flower(x,z){
-  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.45,5),mat(0x2d6a35));
-  stem.position.set(x,.22,z);scene.add(stem);
-  const f=new THREE.Mesh(new THREE.SphereGeometry(.16,6,5),mat(0xe6c85a));
-  f.position.set(x,.48,z);scene.add(f);
-}
+function buildParking() {
+  box(
+    "Parking",
+    -82,
+    0.02,
+    -35,
+    38,
+    0.06,
+    28,
+    0x51565a
+  );
 
-function createSports(){
-  const field=new THREE.Mesh(new THREE.BoxGeometry(58,.08,36),mat(0x3f7841));field.position.set(70,.04,105);scene.add(field);
-  const court=new THREE.Mesh(new THREE.BoxGeometry(32,.10,20),mat(0x3d789e));court.position.set(70,.09,105);scene.add(court);
-  const line=mat(0xf3f0e8);
-  for(const x of [54,86]){const l=new THREE.Mesh(new THREE.BoxGeometry(.16,.03,20),line);l.position.set(x,.16,105);scene.add(l)}
-  for(const z of [95,115]){const l=new THREE.Mesh(new THREE.BoxGeometry(32,.03,.16),line);l.position.set(70,.16,z);scene.add(l)}
-}
-
-function createParking(){
-  const p=road(-75,20,46,26,0x686a6b);
-  for(let x=-95;x<=-55;x+=5){
-    const l=new THREE.Mesh(new THREE.BoxGeometry(.12,.03,20),mat(0xe7e7e7));
-    l.position.set(x,.1,20);scene.add(l)
+  for (
+    let x = -96;
+    x <= -68;
+    x += 7
+  ) {
+    box(
+      "Parking Line",
+      x,
+      0.09,
+      -35,
+      0.25,
+      0.02,
+      24,
+      0xe7e0c5
+    );
   }
 }
 
-function createTree(x,z,s=1){
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.32*s,.46*s,3*s,8),mat(0x68442e));
-  trunk.position.set(x,1.5*s,z);trunk.castShadow=true;scene.add(trunk);
-  const crown=new THREE.Mesh(new THREE.SphereGeometry(2*s,10,8),mat(0x2d6834));
-  crown.position.set(x,3.65*s,z);crown.castShadow=true;scene.add(crown);
+/* =========================================================
+   TREES
+   ========================================================= */
+
+function buildTrees() {
+  for (
+    let i = 0;
+    i < 70;
+    i++
+  ) {
+    const x =
+      (i * 37) % 210 - 105;
+
+    const z =
+      (i * 71) % 190 - 95;
+
+    if (
+      Math.abs(x) < 28 &&
+      Math.abs(z) < 28
+    ) {
+      continue;
+    }
+
+    if (z > 75) {
+      continue;
+    }
+
+    makeTree(x, z);
+  }
 }
 
-function createTrees(){
-  const p=[[-120,-95],[-105,-82],[-90,-105],[90,-105],[108,-88],[122,-100],[-120,20],[-115,55],[-115,95],[115,20],[115,55],[115,95],[-48,110],[48,110],[-35,35],[35,35]];
-  p.forEach((v,i)=>createTree(v[0],v[1],i%3===0?1.3:1));
+function makeTree(x, z) {
+  const group =
+    new THREE.Group();
+
+  group.position.set(
+    x,
+    0,
+    z
+  );
+
+  world.add(group);
+
+  const trunk =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.45,
+        0.6,
+        3,
+        8
+      ),
+      material(0x704a2d)
+    );
+
+  trunk.position.y = 1.5;
+  trunk.castShadow = true;
+
+  group.add(trunk);
+
+  const crown =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        2.3,
+        10,
+        8
+      ),
+      material(0x2f7435)
+    );
+
+  crown.position.y = 4.1;
+  crown.castShadow = true;
+
+  group.add(crown);
 }
 
-function createPlayer(){
-  player=new THREE.Group();
-  const shirt=new THREE.Mesh(new THREE.BoxGeometry(1,.9,.58),mat(0xf3f3f3));shirt.position.y=1.7;shirt.castShadow=true;player.add(shirt);
-  const body=new THREE.Mesh(new THREE.CapsuleGeometry(.52,1.35,4,8),mat(0xeeeeee));body.position.y=1.5;body.castShadow=true;player.add(body);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.43,14,10),mat(0xd89b72));head.position.y=2.65;head.castShadow=true;player.add(head);
-  const legMat=mat(0x20252b);
-  leftLeg=new THREE.Mesh(new THREE.BoxGeometry(.35,1.1,.4),legMat);
-  rightLeg=leftLeg.clone();
-  leftLeg.position.set(-.22,.55,0);rightLeg.position.set(.22,.55,0);
-  leftLeg.castShadow=true;rightLeg.castShadow=true;player.add(leftLeg,rightLeg);
-  player.position.set(0,0,92);scene.add(player);
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+function createPlayer() {
+  player =
+    new THREE.Group();
+
+  player.position.set(
+    0,
+    0,
+    72
+  );
+
+  scene.add(player);
+
+  const body =
+    new THREE.Mesh(
+      new THREE.CapsuleGeometry(
+        0.55,
+        1.2,
+        6,
+        12
+      ),
+      material(0x244f9c)
+    );
+
+  body.position.y = 1.25;
+  body.castShadow = true;
+
+  player.add(body);
+
+  const head =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.43,
+        12,
+        10
+      ),
+      material(0xd8a37b)
+    );
+
+  head.position.y = 2.35;
+  head.castShadow = true;
+
+  player.add(head);
+
+  for (
+    const side of [-0.22, 0.22]
+  ) {
+    const leg =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.18,
+          0.8,
+          0.25
+        ),
+        material(0x20252a)
+      );
+
+    leg.position.set(
+      side,
+      0.45,
+      0
+    );
+
+    leg.castShadow = true;
+
+    player.add(leg);
+  }
 }
 
-function setupKeyboard(){
-  addEventListener("keydown",e=>{
-    if(["KeyW","ArrowUp"].includes(e.code))keys.forward=true;
-    if(["KeyS","ArrowDown"].includes(e.code))keys.backward=true;
-    if(["KeyA","ArrowLeft"].includes(e.code))keys.left=true;
-    if(["KeyD","ArrowRight"].includes(e.code))keys.right=true;
-    if(["ShiftLeft","ShiftRight"].includes(e.code))running=true;
-    if(e.code==="Space")jump();
-  });
-  addEventListener("keyup",e=>{
-    if(["KeyW","ArrowUp"].includes(e.code))keys.forward=false;
-    if(["KeyS","ArrowDown"].includes(e.code))keys.backward=false;
-    if(["KeyA","ArrowLeft"].includes(e.code))keys.left=false;
-    if(["KeyD","ArrowRight"].includes(e.code))keys.right=false;
-    if(["ShiftLeft","ShiftRight"].includes(e.code))running=false;
-  });
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+
+function setupControls() {
+  addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.code === "KeyW" ||
+        event.code === "ArrowUp"
+      ) {
+        keys.forward = true;
+      }
+
+      if (
+        event.code === "KeyS" ||
+        event.code === "ArrowDown"
+      ) {
+        keys.backward = true;
+      }
+
+      if (
+        event.code === "KeyA" ||
+        event.code === "ArrowLeft"
+      ) {
+        keys.left = true;
+      }
+
+      if (
+        event.code === "KeyD" ||
+        event.code === "ArrowRight"
+      ) {
+        keys.right = true;
+      }
+
+      if (
+        event.code === "ShiftLeft" ||
+        event.code === "ShiftRight"
+      ) {
+        running = true;
+      }
+
+      if (
+        event.code === "Space"
+      ) {
+        jump();
+      }
+    }
+  );
+
+  addEventListener(
+    "keyup",
+    (event) => {
+      if (
+        event.code === "KeyW" ||
+        event.code === "ArrowUp"
+      ) {
+        keys.forward = false;
+      }
+
+      if (
+        event.code === "KeyS" ||
+        event.code === "ArrowDown"
+      ) {
+        keys.backward = false;
+      }
+
+      if (
+        event.code === "KeyA" ||
+        event.code === "ArrowLeft"
+      ) {
+        keys.left = false;
+      }
+
+      if (
+        event.code === "KeyD" ||
+        event.code === "ArrowRight"
+      ) {
+        keys.right = false;
+      }
+
+      if (
+        event.code === "ShiftLeft" ||
+        event.code === "ShiftRight"
+      ) {
+        running = false;
+      }
+    }
+  );
+
+  const jumpButton =
+    document.getElementById(
+      "jumpBtn"
+    );
+
+  const runButton =
+    document.getElementById(
+      "runBtn"
+    );
+
+  const joystickElement =
+    document.getElementById(
+      "joystick"
+    );
+
+  const stickElement =
+    document.getElementById(
+      "stick"
+    );
+
+  const lookArea =
+    document.getElementById(
+      "lookArea"
+    );
+
+  jumpButton?.addEventListener(
+    "pointerdown",
+    (event) => {
+      event.preventDefault();
+      jump();
+    }
+  );
+
+  runButton?.addEventListener(
+    "pointerdown",
+    (event) => {
+      event.preventDefault();
+      running = true;
+    }
+  );
+
+  runButton?.addEventListener(
+    "pointerup",
+    () => {
+      running = false;
+    }
+  );
+
+  runButton?.addEventListener(
+    "pointercancel",
+    () => {
+      running = false;
+    }
+  );
+
+  joystickElement?.addEventListener(
+    "pointerdown",
+    (event) => {
+      event.preventDefault();
+
+      joystick.active = true;
+      joystick.id =
+        event.pointerId;
+
+      joystickElement.setPointerCapture(
+        event.pointerId
+      );
+
+      updateJoystick(
+        event,
+        joystickElement,
+        stickElement
+      );
+    }
+  );
+
+  joystickElement?.addEventListener(
+    "pointermove",
+    (event) => {
+      if (
+        joystick.active &&
+        event.pointerId ===
+          joystick.id
+      ) {
+        updateJoystick(
+          event,
+          joystickElement,
+          stickElement
+        );
+      }
+    }
+  );
+
+  joystickElement?.addEventListener(
+    "pointerup",
+    resetJoystick
+  );
+
+  joystickElement?.addEventListener(
+    "pointercancel",
+    resetJoystick
+  );
+
+  lookArea?.addEventListener(
+    "pointerdown",
+    (event) => {
+      look.active = true;
+      look.id =
+        event.pointerId;
+
+      look.x =
+        event.clientX;
+
+      look.y =
+        event.clientY;
+
+      lookArea.setPointerCapture(
+        event.pointerId
+      );
+    }
+  );
+
+  lookArea?.addEventListener(
+    "pointermove",
+    (event) => {
+      if (
+        !look.active ||
+        event.pointerId !==
+          look.id
+      ) {
+        return;
+      }
+
+      const dx =
+        event.clientX -
+        look.x;
+
+      const dy =
+        event.clientY -
+        look.y;
+
+      look.x =
+        event.clientX;
+
+      look.y =
+        event.clientY;
+
+      cameraYaw -=
+        dx * 0.006;
+
+      cameraPitch -=
+        dy * 0.004;
+
+      cameraPitch =
+        THREE.MathUtils.clamp(
+          cameraPitch,
+          -1.0,
+          0.35
+        );
+    }
+  );
+
+  lookArea?.addEventListener(
+    "pointerup",
+    () => {
+      look.active = false;
+    }
+  );
+
+  lookArea?.addEventListener(
+    "pointercancel",
+    () => {
+      look.active = false;
+    }
+  );
 }
 
-function setupJoystick(){
-  const base=document.getElementById("joystick"),stick=document.getElementById("stick");
-  const move=(px,py)=>{
-    const r=base.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width/2-14;
-    let dx=px-cx,dy=py-cy,d=Math.hypot(dx,dy);if(d>max){dx=dx/d*max;dy=dy/d*max}
-    stick.style.transform=`translate(${dx}px,${dy}px)`;joystick.x=dx/max;joystick.y=dy/max;
-  };
-  const reset=()=>{joystick.active=false;joystick.x=0;joystick.y=0;stick.style.transform="translate(0,0)"};
-  base.addEventListener("pointerdown",e=>{joystick.active=true;base.setPointerCapture(e.pointerId);move(e.clientX,e.clientY)});
-  base.addEventListener("pointermove",e=>{if(joystick.active)move(e.clientX,e.clientY)});
-  base.addEventListener("pointerup",reset);base.addEventListener("pointercancel",reset);
-}
+function updateJoystick(
+  event,
+  joystickElement,
+  stickElement
+) {
+  const rect =
+    joystickElement.getBoundingClientRect();
 
-function setupLook(){
-  const area=document.getElementById("lookArea");
-  area.addEventListener("pointerdown",e=>{lookActive=true;lastLookX=e.clientX;lastLookY=e.clientY;area.setPointerCapture(e.pointerId)});
-  area.addEventListener("pointermove",e=>{
-    if(!lookActive)return;
-    const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;
-    cameraYaw-=dx*.006;cameraPitch-=dy*.004;cameraPitch=THREE.MathUtils.clamp(cameraPitch,-1.05,.8);
-  });
-  const stop=()=>lookActive=false;area.addEventListener("pointerup",stop);area.addEventListener("pointercancel",stop);
-}
+  const centerX =
+    rect.left +
+    rect.width / 2;
 
-function setupButtons(){
-  document.getElementById("jumpBtn").addEventListener("pointerdown",e=>{e.preventDefault();jump()});
-  const run=document.getElementById("runBtn");
-  run.addEventListener("pointerdown",e=>{e.preventDefault();running=true});
-  run.addEventListener("pointerup",()=>running=false);run.addEventListener("pointercancel",()=>running=false);run.addEventListener("pointerleave",()=>running=false);
-}
+  const centerY =
+    rect.top +
+    rect.height / 2;
 
-function jump(){if(onGround){velocityY=7.5;onGround=false}}
+  const max =
+    rect.width * 0.32;
 
-function updatePlayer(dt){
-  let x=0,z=0;
-  if(keys.left)x-=1;if(keys.right)x+=1;if(keys.forward)z-=1;if(keys.backward)z+=1;
-  if(Math.abs(joystick.x)>.08||Math.abs(joystick.y)>.08){x=joystick.x;z=joystick.y}
-  const len=Math.hypot(x,z);if(len>1){x/=len;z/=len}
-  const moving=Math.abs(x)>.08||Math.abs(z)>.08;
-  const speed=running?13:6.5;
+  let x =
+    event.clientX -
+    centerX;
 
-  player.position.x+=x*speed*dt;player.position.z+=z*speed*dt;
-  player.position.x=THREE.MathUtils.clamp(player.position.x,-145,145);
-  player.position.z=THREE.MathUtils.clamp(player.position.z,-140,140);
+  let y =
+    event.clientY -
+    centerY;
 
-  if(moving){
-    const target=Math.atan2(x,z);
-    player.rotation.y=THREE.MathUtils.lerp(player.rotation.y,target,.18);
+  const distance =
+    Math.hypot(x, y);
+
+  if (
+    distance > max
+  ) {
+    x *=
+      max / distance;
+
+    y *=
+      max / distance;
   }
 
-  if(moving&&onGround){
-    walkCycle+=dt*(running?15:9);
-    const swing=Math.sin(walkCycle)*(running?.65:.42);
-    leftLeg.rotation.x=swing;rightLeg.rotation.x=-swing;
-    leftLeg.rotation.z=Math.sin(walkCycle*.5)*.04;rightLeg.rotation.z=-Math.sin(walkCycle*.5)*.04;
-  }else{
-    const k=Math.min(1,dt*10);
-    leftLeg.rotation.x=THREE.MathUtils.lerp(leftLeg.rotation.x,0,k);rightLeg.rotation.x=THREE.MathUtils.lerp(rightLeg.rotation.x,0,k);
-    leftLeg.rotation.z=THREE.MathUtils.lerp(leftLeg.rotation.z,0,k);rightLeg.rotation.z=THREE.MathUtils.lerp(rightLeg.rotation.z,0,k);
+  joystick.x =
+    x / max;
+
+  joystick.y =
+    y / max;
+
+  if (stickElement) {
+    stickElement.style.transform =
+      `translate(${x}px, ${y}px)`;
+  }
+}
+
+function resetJoystick() {
+  joystick.active = false;
+  joystick.x = 0;
+  joystick.y = 0;
+  joystick.id = null;
+
+  const stick =
+    document.getElementById(
+      "stick"
+    );
+
+  if (stick) {
+    stick.style.transform =
+      "translate(0, 0)";
+  }
+}
+
+function jump() {
+  if (onGround) {
+    velocityY = 7.2;
+    onGround = false;
+  }
+}
+
+/* =========================================================
+   PLAYER MOVEMENT
+   ========================================================= */
+
+function blocked(
+  x,
+  z
+) {
+  const radius = 0.65;
+
+  for (
+    const collider of colliders
+  ) {
+    if (
+      x >
+        collider.x -
+          collider.sx / 2 -
+          radius &&
+      x <
+        collider.x +
+          collider.sx / 2 +
+          radius &&
+      z >
+        collider.z -
+          collider.sz / 2 -
+          radius &&
+      z <
+        collider.z +
+          collider.sz / 2 +
+          radius
+    ) {
+      return true;
+    }
   }
 
-  velocityY-=18*dt;player.position.y+=velocityY*dt;
-  if(player.position.y<=0){player.position.y=0;velocityY=0;onGround=true}
-
-  updateGate();
+  return (
+    x < -112 ||
+    x > 112 ||
+    z < -112 ||
+    z > 112
+  );
 }
 
-function updateGate(){
-  if(!gateLeft||!gateRight)return;
-  const near=player.position.z>96&&player.position.z<122&&Math.abs(player.position.x)<22;
-  if(near!==gateOpen)gateOpen=near;
-  const target=gateOpen?9:0;
-  gateLeft.position.x=THREE.MathUtils.lerp(gateLeft.position.x,-target,.09);
-  gateRight.position.x=THREE.MathUtils.lerp(gateRight.position.x,target,.09);
+function update(
+  deltaTime
+) {
+  let inputX =
+    (keys.right ? 1 : 0) -
+    (keys.left ? 1 : 0) +
+    joystick.x;
+
+  let inputZ =
+    (keys.backward ? 1 : 0) -
+    (keys.forward ? 1 : 0) +
+    joystick.y;
+
+  const inputLength =
+    Math.hypot(
+      inputX,
+      inputZ
+    );
+
+  if (
+    inputLength > 1
+  ) {
+    inputX /=
+      inputLength;
+
+    inputZ /=
+      inputLength;
+  }
+
+  const speed =
+    running
+      ? 11
+      : 5.5;
+
+  const sin =
+    Math.sin(cameraYaw);
+
+  const cos =
+    Math.cos(cameraYaw);
+
+  move.set(
+    inputX * cos +
+      inputZ * sin,
+    0,
+    -inputX * sin +
+      inputZ * cos
+  );
+
+  if (
+    inputLength > 0.08
+  ) {
+    const nextX =
+      player.position.x +
+      move.x *
+        speed *
+        deltaTime;
+
+    const nextZ =
+      player.position.z +
+      move.z *
+        speed *
+        deltaTime;
+
+    if (
+      !blocked(
+        nextX,
+        player.position.z
+      )
+    ) {
+      player.position.x =
+        nextX;
+    }
+
+    if (
+      !blocked(
+        player.position.x,
+        nextZ
+      )
+    ) {
+      player.position.z =
+        nextZ;
+    }
+
+    player.rotation.y =
+      Math.atan2(
+        move.x,
+        move.z
+      );
+  }
+
+  velocityY -=
+    18 * deltaTime;
+
+  player.position.y +=
+    velocityY *
+    deltaTime;
+
+  if (
+    player.position.y <= 0
+  ) {
+    player.position.y = 0;
+    velocityY = 0;
+    onGround = true;
+  }
+
+  updateCamera();
 }
 
-function updateCamera(dt){
-  const distance=9;
-  const horizontal=Math.cos(cameraPitch)*distance;
-  const targetX=player.position.x+Math.sin(cameraYaw)*horizontal;
-  const targetZ=player.position.z+Math.cos(cameraYaw)*horizontal;
-  const targetY=player.position.y+2.8+Math.sin(cameraPitch)*distance;
-  tmp.set(targetX,targetY,targetZ);
-  camera.position.lerp(tmp,Math.min(1,dt*7));
-  camera.lookAt(player.position.x,player.position.y+1.55,player.position.z);
+function updateCamera() {
+  const distance = 7.5;
+
+  const horizontalDistance =
+    Math.cos(cameraPitch) *
+    distance;
+
+  const target =
+    new THREE.Vector3(
+      player.position.x,
+      player.position.y + 1.5,
+      player.position.z
+    );
+
+  const desired =
+    new THREE.Vector3(
+      target.x +
+        Math.sin(cameraYaw) *
+          horizontalDistance,
+
+      target.y -
+        Math.sin(cameraPitch) *
+          distance +
+        1.2,
+
+      target.z +
+        Math.cos(cameraYaw) *
+          horizontalDistance
+    );
+
+  camera.position.lerp(
+    desired,
+    0.12
+  );
+
+  camera.lookAt(target);
 }
 
-function addWorldBoundary(){
-  const b=new THREE.Mesh(new THREE.BoxGeometry(300,.4,2),mat(0x5a4638));
-  b.position.set(0,.2,-150);scene.add(b);
-  const b2=b.clone();b2.position.z=150;scene.add(b2);
+/* =========================================================
+   LOOP
+   ========================================================= */
+
+function animate() {
+  requestAnimationFrame(
+    animate
+  );
+
+  const now =
+    performance.now();
+
+  const deltaTime =
+    Math.min(
+      (now - lastTime) / 1000,
+      0.05
+    );
+
+  lastTime = now;
+
+  update(deltaTime);
+
+  renderer.render(
+    scene,
+    camera
+  );
 }
 
-function resize(){
-  camera.aspect=innerWidth/innerHeight;
+function hideLoading() {
+  const loading =
+    document.getElementById(
+      "loading"
+    );
+
+  if (loading) {
+    loading.classList.add(
+      "hide"
+    );
+
+    setTimeout(
+      () => loading.remove(),
+      500
+    );
+  }
+}
+
+function onResize() {
+  camera.aspect =
+    innerWidth /
+    innerHeight;
+
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5))
-}
 
-function animate(){
-  requestAnimationFrame(animate);
-  const dt=Math.min(clock.getDelta(),.05);
-  updatePlayer(dt);
-  updateCamera(dt);
-  renderer.render(scene,camera)
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
 }
