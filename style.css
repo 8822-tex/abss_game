@@ -1,6 +1,5 @@
 * {
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -9,387 +8,170 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-
-  background: #111820;
-
+  background: #83b8d4;
   font-family: Arial, sans-serif;
-
   touch-action: none;
-  overscroll-behavior: none;
 }
-
-body {
-  position: relative;
-}
-
-/* =========================
-   THREE.JS CANVAS
-   ========================= */
 
 canvas {
-  position: fixed;
-
-  left: 0;
-  top: 0;
-
+  display: block;
   width: 100%;
   height: 100%;
-
-  display: block;
-
   touch-action: none;
 }
 
-
-/* =========================
-   HUD
-   ========================= */
+button {
+  font: 700 10px Arial;
+  border: 0;
+  color: #fff;
+  background: rgba(20, 24, 25, 0.68);
+  -webkit-tap-highlight-color: transparent;
+}
 
 #hud {
   position: fixed;
-
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-
-  z-index: 5;
-
+  inset: 0;
   pointer-events: none;
+  z-index: 5;
 }
 
 .brand {
   position: absolute;
-
   top: 12px;
   left: 12px;
-
+  color: #fff;
+  text-shadow: 0 2px 4px #000;
   display: flex;
   flex-direction: column;
-
   gap: 3px;
-
-  color: #ffffff;
-
-  text-shadow:
-    0 2px 5px rgba(0, 0, 0, 0.9);
 }
 
-.brand strong {
-  font-size: 16px;
-
+.brand b {
+  font-size: 15px;
   letter-spacing: 1px;
 }
 
 .brand small {
   font-size: 9px;
-
   opacity: 0.9;
 }
 
 #lookHint {
   position: absolute;
-
-  top: 12px;
+  top: 13px;
   right: 12px;
-
   padding: 7px 10px;
-
   border-radius: 12px;
-
-  background: rgba(0, 0, 0, 0.35);
-
-  color: #ffffff;
-
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
   font-size: 9px;
-
-  opacity: 0.82;
-
-  text-align: center;
+  opacity: 0.75;
 }
 
+#joystick {
+  position: fixed;
+  left: 18px;
+  bottom: 24px;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: rgba(20, 30, 25, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  z-index: 10;
+  touch-action: none;
+}
 
-/* =========================
-   LOADING SCREEN
-   ========================= */
+#stick {
+  position: absolute;
+  left: 23px;
+  top: 23px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(245, 245, 245, 0.9);
+  box-shadow: 0 2px 6px #0006;
+  transform: translate(0, 0);
+}
+
+.roundBtn {
+  position: fixed;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  z-index: 10;
+  right: 17px;
+  bottom: 22px;
+}
+
+.roundBtn:active {
+  transform: scale(0.94);
+  background: rgba(150, 40, 35, 0.85);
+}
+
+#runBtn {
+  right: 66px;
+  bottom: 70px;
+  width: 34px;
+  height: 34px;
+  font-size: 8px;
+}
+
+#jumpBtn {
+  bottom: 70px;
+}
+
+#lookArea {
+  position: fixed;
+  left: 40%;
+  right: 0;
+  top: 55px;
+  bottom: 0;
+  z-index: 6;
+  touch-action: none;
+  background: transparent;
+}
 
 #loading {
   position: fixed;
-
   inset: 0;
-
+  background: #111820;
   z-index: 100;
-
   display: flex;
-
-  flex-direction: column;
-
   align-items: center;
   justify-content: center;
-
-  gap: 9px;
-
-  background: #111820;
-
-  color: #ffffff;
-
-  text-align: center;
-
-  transition:
-    opacity 0.35s ease,
-    visibility 0.35s ease;
+  flex-direction: column;
+  color: #fff;
+  gap: 8px;
+  transition: opacity 0.35s;
 }
 
-#loading strong {
-  font-size: 23px;
-
-  letter-spacing: 1px;
-}
-
-#loading span {
-  font-size: 13px;
-
-  opacity: 0.8;
+.loader {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #ffffff30;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 #loading.hide {
   opacity: 0;
-
-  visibility: hidden;
-
   pointer-events: none;
 }
 
-.loader {
-  width: 36px;
-  height: 36px;
-
-  border-radius: 50%;
-
-  border:
-    3px solid rgba(255, 255, 255, 0.2);
-
-  border-top-color: #ffffff;
-
-  animation:
-    abssSpin 0.8s linear infinite;
-}
-
-@keyframes abssSpin {
+@keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-
-/* =========================
-   JOYSTICK
-   ========================= */
-
-#joystick {
-  position: fixed;
-
-  left: 18px;
-  bottom: 24px;
-
-  width: 78px;
-  height: 78px;
-
-  z-index: 10;
-
-  border-radius: 50%;
-
-  background:
-    rgba(20, 30, 25, 0.42);
-
-  border:
-    1px solid rgba(255, 255, 255, 0.2);
-
-  box-shadow:
-    0 3px 12px rgba(0, 0, 0, 0.35);
-
-  touch-action: none;
-
-  user-select: none;
-}
-
-#stick {
-  position: absolute;
-
-  left: 25px;
-  top: 25px;
-
-  width: 28px;
-  height: 28px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 255, 255, 0.92);
-
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.55);
-
-  transform:
-    translate(0, 0);
-
-  pointer-events: none;
-}
-
-
-/* =========================
-   ACTION BUTTONS
-   ========================= */
-
-.roundBtn {
-  position: fixed;
-
-  z-index: 10;
-
-  width: 50px;
-  height: 50px;
-
-  border: 0;
-
-  border-radius: 50%;
-
-  background:
-    rgba(20, 24, 25, 0.72);
-
-  color: #ffffff;
-
-  font:
-    700 10px Arial, sans-serif;
-
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.45);
-
-  touch-action: none;
-
-  user-select: none;
-
-  cursor: pointer;
-}
-
-.roundBtn:active {
-  transform: scale(0.92);
-
-  background:
-    rgba(145, 45, 38, 0.9);
-}
-
-#jumpBtn {
-  right: 18px;
-  bottom: 24px;
-}
-
-#runBtn {
-  right: 72px;
-  bottom: 78px;
-
-  width: 38px;
-  height: 38px;
-
-  font-size: 8px;
-}
-
-
-/* =========================
-   CAMERA LOOK AREA
-   ========================= */
-
-#lookArea {
-  position: fixed;
-
-  left: 40%;
-  right: 0;
-
-  top: 55px;
-  bottom: 0;
-
-  z-index: 6;
-
-  background: transparent;
-
-  touch-action: none;
-
-  user-select: none;
-}
-
-
-/* =========================
-   DESKTOP
-   ========================= */
-
 @media (min-width: 800px) {
-
   #joystick {
     left: 30px;
     bottom: 30px;
-
-    width: 86px;
-    height: 86px;
-  }
-
-  #stick {
-    left: 28px;
-    top: 28px;
-  }
-
-  #jumpBtn {
-    right: 28px;
-    bottom: 30px;
-  }
-
-  #runBtn {
-    right: 84px;
-    bottom: 88px;
   }
 
   #lookHint {
     font-size: 10px;
-  }
-}
-
-
-/* =========================
-   SMALL PHONES
-   ========================= */
-
-@media (max-width: 380px) {
-
-  #joystick {
-    left: 14px;
-    bottom: 18px;
-
-    width: 70px;
-    height: 70px;
-  }
-
-  #stick {
-    left: 21px;
-    top: 21px;
-  }
-
-  #jumpBtn {
-    right: 14px;
-    bottom: 18px;
-
-    width: 46px;
-    height: 46px;
-  }
-
-  #runBtn {
-    right: 64px;
-    bottom: 66px;
-
-    width: 34px;
-    height: 34px;
-  }
-
-  #lookHint {
-    max-width: 150px;
-
-    font-size: 8px;
   }
 }
