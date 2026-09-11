@@ -1,91 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-  >
-
-  <title>ABSS MAP</title>
-
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <title>ABSS Map</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-  <!-- Loading Screen -->
-  <div id="loading">
-    <div class="loader"></div>
-    <strong>ABSS MAP</strong>
-    <span>Loading ABSS Institute of Technology...</span>
-  </div>
-
-
-  <!-- HUD -->
+  <div id="loading"><div class="loader"></div><b>ABSS MAP</b><span>Loading campus...</span></div>
   <div id="hud">
-
-    <div class="brand">
-      <strong>ABSS MAP</strong>
-      <small>ABSS Institute of Technology • Meerut</small>
-    </div>
-
-    <div id="lookHint">
-      Drag right side to look • E to interact
-    </div>
-
+    <div class="brand"><b>ABSS MAP</b><small>ABSS Institute of Technology • Meerut</small></div>
+    <div id="lookHint">Swipe the right side to look around</div>
   </div>
 
-
-  <!-- Mobile Joystick -->
-  <div id="joystick">
-    <div id="stick"></div>
-  </div>
-
-
-  <!-- Jump -->
-  <button
-    id="jumpBtn"
-    class="roundBtn"
-    type="button"
-  >
-    JUMP
-  </button>
-
-
-  <!-- Run -->
-  <button
-    id="runBtn"
-    class="roundBtn runButton"
-    type="button"
-  >
-    RUN
-  </button>
-
-
-  <!-- Camera Sensitivity -->
-  <!-- Hidden because game.js supports it automatically -->
-  <input
-    id="cameraSensitivity"
-    type="range"
-    min="0.002"
-    max="0.015"
-    step="0.001"
-    value="0.006"
-    hidden
-  >
-
-
-  <!-- Right-side camera look area -->
+  <div id="joystick"><div id="stick"></div></div>
+  <button id="jumpBtn" class="roundBtn">JUMP</button>
+  <button id="runBtn" class="roundBtn">RUN</button>
   <div id="lookArea"></div>
 
-
-  <!-- IMPORTANT:
-       Only game.js is loaded here.
-       game.js itself loads Three.js.
-  -->
-  <script src="game.js"></script>
-
+  <script type="module" src="game.js"></script>
 </body>
 </html>
